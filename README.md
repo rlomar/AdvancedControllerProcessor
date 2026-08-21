@@ -1,5 +1,19 @@
 # Advanced Controller Processor
 
+<p align="center">
+  <a href="https://github.com/rlomar/AdvancedControllerProcessor/releases/latest/download/AdvancedControllerProcessor.exe">
+    <img src="https://img.shields.io/badge/%E2%AC%87_DOWNLOAD_LATEST-v1.0.0-8B5CF6?style=for-the-badge&labelColor=171C28" alt="Download Latest" />
+  </a>
+</p>
+
+## ⬇️ Direct Download (one click)
+
+**[▶ DOWNLOAD AdvancedControllerProcessor.exe](https://github.com/rlomar/AdvancedControllerProcessor/releases/latest/download/AdvancedControllerProcessor.exe)**
+
+> Or browse all files on the [**Releases page**](../../releases) — the program file lives under **Assets** of each release, not in the repository file list.
+
+---
+
 **PS5 DualSense → Virtual Xbox 360 / DualShock 4 controller processor for Windows**
 
 Transform your DualSense controller input with advanced processing — deadzones, response curves, speed multipliers, directional speeds and smoothing — then feed it into your games as a fully working virtual Xbox 360 or DualShock 4 controller.
