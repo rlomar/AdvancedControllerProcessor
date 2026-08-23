@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:services="clr-namespace:AdvancedControllerProcessor.Services"
         Title="Advanced Controller Processor — Setup Required"
+        Icon="Resources/BlankRL.ico"
         Width="580"
         SizeToContent="Height"
         MaxWidth="620"

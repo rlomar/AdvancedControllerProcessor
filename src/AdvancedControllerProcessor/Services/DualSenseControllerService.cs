@@ -81,9 +81,15 @@ public sealed class DualSenseControllerService : IControllerService
     private bool _isConnected;
     private int _pollingRateHz = PollingRate.Default;
 
+    // Raw hardware arrival-rate tracking (EMA of inter-report gaps in Stopwatch ticks).
+    private long _arrivalEmaTicks;
+    private long _lastArrivalTicks;
+    private bool _hasLastArrival;
+
     public event Action<ControllerState>? StateChanged;
     public event Action<bool>? ConnectionChanged;
     public event Action<int>? MeasuredRateChanged;
+    public event Action<int>? RawRateChanged;
 
     public bool IsConnected => _isConnected;
     public ConnectionType ConnectionType { get; private set; }
@@ -103,8 +109,7 @@ public sealed class DualSenseControllerService : IControllerService
     /// Find the first connected DualSense controller.
     /// </summary>
     public bool TryConnect()
-    {
-        try
+    {        try
         {
             var devices = DeviceList.Local.GetHidDevices()
                 .Where(d => d.VendorID == VendorIdSony &&
@@ -133,6 +138,8 @@ public sealed class DualSenseControllerService : IControllerService
 
             var previousState = _isConnected;
             _isConnected = true;
+            _hasLastArrival = false;
+            Volatile.Write(ref _arrivalEmaTicks, 0);
 
             if (!previousState)
             {
@@ -232,28 +239,46 @@ public sealed class DualSenseControllerService : IControllerService
                 ControllerState state = ParseReport(buffer, bytesRead, connType);
 
                 long nowTicks = sw.Elapsed.Ticks;
+                UpdateArrivalRate(nowTicks);
 
+                bool submit;
                 if (firstReport)
                 {
                     firstReport = false;
                     lastSubmitTicks = nowTicks;
-                    StateChanged?.Invoke(state);
-                    submittedInWindow++;
+                    submit = true;
                 }
-                else if (ShouldSubmit(ref lastSubmitTicks, nowTicks,
-                             TimeSpan.TicksPerSecond / Math.Max(1, PollingRateHz)))
+                else
                 {
-                    StateChanged?.Invoke(state);
-                    submittedInWindow++;
+                    long periodTicks = TimeSpan.TicksPerSecond / Math.Max(1, PollingRateHz);
+                    if (ShouldPassThrough(periodTicks, Volatile.Read(ref _arrivalEmaTicks)))
+                    {
+                        // Hardware is no faster than the target: pacing cannot add
+                        // freshness, so submit event-driven on every arrival. Keeps
+                        // the measured rate pinned to the true hardware rate.
+                        lastSubmitTicks = nowTicks;
+                        submit = true;
+                    }
+                    else
+                    {
+                        submit = ShouldSubmit(ref lastSubmitTicks, nowTicks, periodTicks);
+                    }
                 }
+
+                if (submit)
+                    submittedInWindow++;
 
                 long windowElapsed = nowTicks - windowStartTicks;
                 if (windowElapsed >= TimeSpan.TicksPerSecond / 2)
                 {
                     MeasuredRateChanged?.Invoke(ComputeMeasuredHz(submittedInWindow, windowElapsed));
+                    RawRateChanged?.Invoke(ComputeRawHz(Volatile.Read(ref _arrivalEmaTicks)));
                     submittedInWindow = 0;
                     windowStartTicks = nowTicks;
                 }
+
+                if (submit)
+                    StateChanged?.Invoke(state);
             }
             catch (ThreadInterruptedException)
             {
@@ -266,7 +291,7 @@ public sealed class DualSenseControllerService : IControllerService
             catch (Exception ex)
             {
                 LogError(ex, "Error in input loop");
-                Thread.Sleep(100);
+                Thread.Sleep(15); // brief backoff; long sleeps stack HID backlog -> stale input bursts
             }
         }
     }
@@ -301,6 +326,44 @@ public sealed class DualSenseControllerService : IControllerService
     /// </summary>
     internal static int ComputeMeasuredHz(int submittedCount, long windowElapsedTicks) =>
         windowElapsedTicks <= 0 ? 0 : (int)((long)submittedCount * TimeSpan.TicksPerSecond / windowElapsedTicks);
+
+    /// <summary>
+    /// Convert an EMA inter-arrival gap (in Stopwatch ticks) to a raw hardware rate in Hz.
+    /// Pure/static so it can be unit tested without hardware.
+    /// </summary>
+    internal static int ComputeRawHz(long arrivalEmaTicks) =>
+        arrivalEmaTicks <= 0 ? 0 : (int)Math.Round((double)TimeSpan.TicksPerSecond / arrivalEmaTicks);
+
+    /// <summary>
+    /// Passthrough decision: when the target period is not longer than the observed
+    /// average inter-arrival gap, pacing can never skip a stale report — the freshest
+    /// data IS every report, so submit event-driven. Pure/static for unit testing.
+    /// </summary>
+    internal static bool ShouldPassThrough(long periodTicks, long arrivalEmaTicks) =>
+        periodTicks <= arrivalEmaTicks;
+
+    /// <summary>
+    /// Maintain the exponential moving average of inter-report gaps.
+    /// Alpha = 1/16: smooths Bluetooth burst jitter while reacting within ~16 reports.
+    /// Called on the input thread only.
+    /// </summary>
+    private void UpdateArrivalRate(long nowTicks)
+    {
+        if (_hasLastArrival)
+        {
+            long interval = nowTicks - _lastArrivalTicks;
+            // Ignore reconnect/hibernation-sized gaps so the EMA recovers quickly
+            if (interval > 0 && interval < TimeSpan.TicksPerSecond)
+            {
+                long ema = Volatile.Read(ref _arrivalEmaTicks);
+                ema = ema == 0 ? interval : ema - (ema >> 4) + (interval >> 4);
+                Volatile.Write(ref _arrivalEmaTicks, ema);
+            }
+        }
+
+        _lastArrivalTicks = nowTicks;
+        _hasLastArrival = true;
+    }
 
     private void HandleDisconnect()
     {

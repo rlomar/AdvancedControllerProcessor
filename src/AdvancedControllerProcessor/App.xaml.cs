@@ -28,6 +28,11 @@ public partial class App : Application
         Logging.Info("Application starting");
         Logging.Info($"Advanced Controller Processor v{GetAppVersion()} — Blank RL");
 
+        // Keep the input thread responsive during long gaming sessions: without
+        // this, Windows progressively deprioritizes the process under load and
+        // input delay creeps back in.
+        TryElevateProcessPriority();
+
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
@@ -115,6 +120,21 @@ public partial class App : Application
     {
         Directory.CreateDirectory(LogDirectory);
         Directory.CreateDirectory(ProfilesDirectory);
+    }
+
+    private static void TryElevateProcessPriority()
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetCurrentProcess();
+            process.PriorityClass = System.Diagnostics.ProcessPriorityClass.High;
+            process.PriorityBoostEnabled = true;
+            Logging.Info("Process priority set to High (priority boost enabled)");
+        }
+        catch (Exception ex)
+        {
+            Logging.Warn($"Could not raise process priority: {ex.Message}");
+        }
     }
 
     private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)

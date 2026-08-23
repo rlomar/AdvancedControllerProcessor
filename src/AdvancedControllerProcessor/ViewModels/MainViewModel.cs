@@ -26,6 +26,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private VirtualControllerType _virtualType;
     private int _selectedPollingRate = PollingRate.Default;
     private int _measuredPollingRate = PollingRate.Default;
+    private int _measuredRawRate;
 
     // Thread dispatcher for UI updates
     private readonly SynchronizationContext? _syncContext;
@@ -64,6 +65,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _controllerService.StateChanged += OnControllerStateChanged;
         _controllerService.ConnectionChanged += OnConnectionChanged;
         _controllerService.MeasuredRateChanged += OnMeasuredRateChanged;
+        _controllerService.RawRateChanged += OnRawRateChanged;
         _virtualService.ControllerCreated += OnVirtualCreated;
         _virtualService.ControllerRemoved += OnVirtualRemoved;
 
@@ -206,16 +208,64 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         {
             if (SetProperty(ref _measuredPollingRate, value))
                 OnPropertyChanged(nameof(MeasuredRateText));
+            OnPropertyChanged(nameof(PollingRateStatus));
+            OnPropertyChanged(nameof(RateHint));
         }
     }
 
     public string MeasuredRateText => $"{MeasuredPollingRate} Hz";
 
-    public string PollingRateStatus => $"Target: {SelectedPollingRate} Hz · Measured: {MeasuredPollingRate} Hz";
+    /// <summary>Raw hardware HID report rate (DualSense USB native ≈ 250 Hz).</summary>
+    public int MeasuredRawRate
+    {
+        get => _measuredRawRate;
+        private set
+        {
+            if (SetProperty(ref _measuredRawRate, value))
+                OnPropertyChanged(nameof(HardwareRateText));
+            OnPropertyChanged(nameof(PollingRateStatus));
+            OnPropertyChanged(nameof(RateHint));
+        }
+    }
+
+    public string HardwareRateText => MeasuredRawRate > 0
+        ? $"{MeasuredRawRate} Hz"
+        : "—";
+
+    public string PollingRateStatus => $"Target: {SelectedPollingRate} Hz · Pad: {MeasuredPollingRate} Hz · Hardware: {HardwareRateText}";
+
+    /// <summary>
+    /// Explains any gap between target and achievable rate. The DualSense sends
+    /// ~250 reports/sec over USB natively; higher targets engage automatically
+    /// when the host USB polling interval is overclocked (e.g. hidusbf).
+    /// </summary>
+    public string RateHint
+    {
+        get
+        {
+            if (MeasuredRawRate == 0)
+                return string.Empty;
+
+            if (MeasuredRawRate + 5 < SelectedPollingRate)
+                return $"DualSense hardware sends ~{MeasuredRawRate} reports/sec — every one reaches the pad at full speed. " +
+                       $"Higher target engages automatically if the USB interval is overclocked (hidusbf).";
+            return "Running event-driven at full hardware speed.";
+        }
+    }
 
     private void OnMeasuredRateChanged(int hz)
     {
         void UpdateUi() => MeasuredPollingRate = hz;
+
+        if (_syncContext is not null)
+            _syncContext.Post(_ => UpdateUi(), null);
+        else
+            UpdateUi();
+    }
+
+    private void OnRawRateChanged(int hz)
+    {
+        void UpdateUi() => MeasuredRawRate = hz;
 
         if (_syncContext is not null)
             _syncContext.Post(_ => UpdateUi(), null);
@@ -413,6 +463,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _controllerService.StateChanged -= OnControllerStateChanged;
         _controllerService.ConnectionChanged -= OnConnectionChanged;
         _controllerService.MeasuredRateChanged -= OnMeasuredRateChanged;
+        _controllerService.RawRateChanged -= OnRawRateChanged;
         _virtualService.ControllerCreated -= OnVirtualCreated;
         _virtualService.ControllerRemoved -= OnVirtualRemoved;
 

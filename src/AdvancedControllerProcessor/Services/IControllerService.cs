@@ -38,6 +38,13 @@ public interface IControllerService : IDisposable
     /// </summary>
     event Action<int>? MeasuredRateChanged;
 
+    /// <summary>
+    /// Fired roughly twice per second with the RAW hardware report rate (Hz)
+    /// at which the physical controller is delivering HID reports
+    /// (DualSense USB native ≈ 250 Hz). Called on input thread.
+    /// </summary>
+    event Action<int>? RawRateChanged;
+
     /// <summary>Whether a controller is currently connected and readable.</summary>
     bool IsConnected { get; }
 

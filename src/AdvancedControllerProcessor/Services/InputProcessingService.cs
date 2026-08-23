@@ -20,6 +20,16 @@ public sealed class InputProcessingService : IInputProcessingService
     private readonly SmoothingProcessor _leftSmoothing = new();
     private readonly SmoothingProcessor _rightSmoothing = new();
 
+    // Per-stick curve cache. The hot path runs 250-1000x/second; resolving a
+    // CustomCurve there would allocate a list-backed object every frame and
+    // cause GC churn that surfaces as periodic stutters in long sessions.
+    private string _leftCurveName = string.Empty;
+    private List<CurvePoint>? _leftCurvePoints;
+    private IResponseCurve _leftCurve = LinearCurve.Instance;
+    private string _rightCurveName = string.Empty;
+    private List<CurvePoint>? _rightCurvePoints;
+    private IResponseCurve _rightCurve = LinearCurve.Instance;
+
     public bool ProcessingEnabled { get; set; }
     public Profile CurrentProfile { get; set; } = Profile.Default();
 
@@ -84,7 +94,9 @@ public sealed class InputProcessingService : IInputProcessingService
             : raw;
 
         // 2. Response Curve
-        var curve = ResolveCurve(settings.ResponseCurve, settings.CustomCurvePoints);
+        var curve = GetCachedCurve(
+            ref _leftCurveName, ref _leftCurvePoints, ref _leftCurve,
+            settings.ResponseCurve, settings.CustomCurvePoints);
         StickState step2 = new StickState(
             ApplyCurveWithSign(step1.X, curve),
             ApplyCurveWithSign(step1.Y, curve));
@@ -124,7 +136,9 @@ public sealed class InputProcessingService : IInputProcessingService
                 : DeadzoneProcessor.ProcessRadial(raw, settings.Deadzone))
             : raw;
 
-        var curve = ResolveCurve(settings.ResponseCurve, settings.CustomCurvePoints);
+        var curve = GetCachedCurve(
+            ref _rightCurveName, ref _rightCurvePoints, ref _rightCurve,
+            settings.ResponseCurve, settings.CustomCurvePoints);
         StickState step2 = new StickState(
             ApplyCurveWithSign(step1.X, curve),
             ApplyCurveWithSign(step1.Y, curve));
@@ -152,6 +166,26 @@ public sealed class InputProcessingService : IInputProcessingService
             "Custom" => new CustomCurve(customPoints ?? []),
             _ => LinearCurve.Instance // "Linear" or unknown
         };
+    }
+
+    /// <summary>
+    /// Cached variant of <see cref="ResolveCurve"/> for the hot path.
+    /// Rebuilds only when the curve name or the point-list instance changes.
+    /// The UI pushes brand-new settings objects on every edit, so reference
+    /// equality is a precise change signal: cache hits for every frame between
+    /// user edits, one rebuild per edit, zero allocations in steady state.
+    /// </summary>
+    private static IResponseCurve GetCachedCurve(
+        ref string cachedName, ref List<CurvePoint>? cachedPoints, ref IResponseCurve cachedCurve,
+        string curveName, List<CurvePoint>? customPoints)
+    {
+        if (cachedName == curveName && ReferenceEquals(cachedPoints, customPoints))
+            return cachedCurve;
+
+        cachedCurve = ResolveCurve(curveName, customPoints);
+        cachedName = curveName;
+        cachedPoints = customPoints;
+        return cachedCurve;
     }
 
     /// <summary>

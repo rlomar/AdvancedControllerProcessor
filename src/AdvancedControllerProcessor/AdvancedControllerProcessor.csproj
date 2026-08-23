@@ -15,6 +15,7 @@
     <Copyright>Copyright © Blank RL. All rights reserved.</Copyright>
     <Description>PS5 DualSense to virtual Xbox 360 / DualShock 4 controller processor for Windows</Description>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationIcon>Resources\BlankRL.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +32,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Profiles\Default.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\BlankRL.ico" />
   </ItemGroup>
 
 </Project>
