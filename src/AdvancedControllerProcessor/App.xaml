@@ -38,7 +38,7 @@
             <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
             <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
             <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
-            <SolidColorBrush x:Key="ScrollThumbBrush" Color="#2E3950" />
+            <SolidColorBrush x:Key="ScrollThumbBrush" Color="#55628A" />
 
             <!-- Gradients -->
             <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
@@ -515,7 +515,7 @@
 
             <Style TargetType="ScrollBar">
                 <Setter Property="Background" Value="Transparent" />
-                <Setter Property="Width" Value="8" />
+                <Setter Property="Width" Value="11" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollBar">

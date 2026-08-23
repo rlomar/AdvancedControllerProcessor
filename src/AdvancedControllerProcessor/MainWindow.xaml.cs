@@ -24,10 +24,11 @@ public partial class MainWindow : Window
         Loaded += OnLoaded;
         Closing += OnClosing;
 
-        // Sliders swallow the mouse wheel to adjust their own value while the
-        // cursor rests on them, making long tabs feel impossible to scroll.
-        // Intercept at preview level (before sliders handle it) and redirect to
-        // the enclosing tab ScrollViewer instead.
+        // Controls like sliders and combo boxes swallow the mouse wheel for their
+        // own behavior, which makes long tabs feel impossible to scroll.
+        // Intercept at preview level (fires before ANY control handles the wheel)
+        // and redirect it to the enclosing tab ScrollViewer instead. This makes
+        // the page scroll everywhere, regardless of what is under the cursor.
         AddHandler(Mouse.PreviewMouseWheelEvent,
             new MouseWheelEventHandler(OnPreviewMouseWheelForScroll), handledEventsToo: true);
     }
@@ -36,9 +37,6 @@ public partial class MainWindow : Window
     {
         if (e.OriginalSource is not DependencyObject source)
             return;
-
-        if (FindAncestor<System.Windows.Controls.Slider>(source) is null)
-            return; // normal elements already bubble the wheel to the ScrollViewer
 
         var viewer = FindAncestor<ScrollViewer>(source);
         if (viewer is null || viewer.ScrollableHeight <= 0)
@@ -64,6 +62,9 @@ public partial class MainWindow : Window
     {
         try
         {
+            // Remove leftovers from previous self-updates before anything else
+            Services.SelfUpdater.CleanupLeftovers();
+
             // Initialize ViewModel
             _vm = new MainViewModel();
             DataContext = _vm;
@@ -163,6 +164,7 @@ public partial class MainWindow : Window
     // ── Update Notification ────────────────────────────────
 
     private UpdateInfo? _pendingUpdate;
+    private bool _isUpdating;
 
     private async Task CheckForUpdatesAsync()
     {
@@ -171,18 +173,67 @@ public partial class MainWindow : Window
             return;
 
         _pendingUpdate = info;
-        UpdateBannerText.Text = $"Update available: v{info.Version} — click to download";
+        UpdateBannerText.Text = $"Update available: v{info.Version} — click to update automatically";
         UpdateBanner.Visibility = Visibility.Visible;
     }
 
-    private void OnUpdateBannerClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    private async void OnUpdateBannerClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (_pendingUpdate is null)
+        if (_pendingUpdate is null || _isUpdating)
             return;
 
+        var info = _pendingUpdate;
+        var choice = MessageBox.Show(
+            this,
+            $"Version v{info.Version} is available.\n\n" +
+            "Install it now? The app will download the update, " +
+            "replace itself and restart — no manual steps needed.",
+            "Update available",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (choice != MessageBoxResult.Yes)
+        {
+            OpenDownloadUrl(info);
+            return;
+        }
+
+        _isUpdating = true;
         try
         {
-            Process.Start(new ProcessStartInfo(_pendingUpdate.DownloadUrl) { UseShellExecute = true });
+            await SelfUpdater.ApplyUpdateAsync(
+                info,
+                progress => Dispatcher.Invoke(() =>
+                {
+                    if (_vm is not null) _vm.StatusMessage = progress;
+                    UpdateBannerText.Text = progress ?? "Updating…";
+                }));
+
+            // New version is running; close this (old) instance.
+            // Its exe file was renamed aside, so nothing blocks the swap.
+            Logging.Info($"Self-updated to v{info.Version} — shutting down old instance");
+            Close();
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            Logging.Error(ex, $"Self-update to v{info.Version} failed");
+            _isUpdating = false;
+            MessageBox.Show(
+                this,
+                $"Automatic update failed:\n{ex.Message}\n\nOpening the download page instead.",
+                "Update failed",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            OpenDownloadUrl(info);
+        }
+    }
+
+    private void OpenDownloadUrl(UpdateInfo info)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(info.DownloadUrl) { UseShellExecute = true });
         }
         catch (Exception ex)
         {
