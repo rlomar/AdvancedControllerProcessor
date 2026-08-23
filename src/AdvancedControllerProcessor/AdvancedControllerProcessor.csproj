@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>AdvancedControllerProcessor</RootNamespace>
+    <AssemblyName>AdvancedControllerProcessor</AssemblyName>
+    <Version>1.1.0</Version>
+    <Authors>Blank RL</Authors>
+    <Company>Blank RL</Company>
+    <Product>Advanced Controller Processor</Product>
+    <Copyright>Copyright © Blank RL. All rights reserved.</Copyright>
+    <Description>PS5 DualSense to virtual Xbox 360 / DualShock 4 controller processor for Windows</Description>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
+    <PackageReference Include="HidSharp" Version="2.6.4" />
+    <PackageReference Include="Nefarius.Drivers.HidHide" Version="3.3.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.77" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AdvancedControllerProcessor.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Profiles\Default.json" />
+  </ItemGroup>
+
+</Project>

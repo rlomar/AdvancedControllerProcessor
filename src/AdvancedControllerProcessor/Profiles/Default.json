@@ -1,0 +1,24 @@
+{
+  "Name": "Default",
+  "Description": "Default profile with no processing applied",
+  "LeftStick": {
+    "DeadzoneEnabled": false,
+    "Deadzone": 0.0,
+    "DeadzoneType": "Radial",
+    "ResponseCurve": "Linear",
+    "CustomCurvePoints": [],
+    "XSpeedMultiplier": 1.0,
+    "YSpeedMultiplier": 1.0,
+    "DirectionalSpeedEnabled": false,
+    "ForwardSpeed": 1.0,
+    "BackwardSpeed": 1.0,
+    "LeftSpeed": 1.0,
+    "RightSpeed": 1.0,
+    "SmoothingEnabled": false,
+    "SmoothingAmount": 0.0
+  },
+  "RightStick": {
+    "ProcessingEnabled": false
+  },
+  "TriggerProcessingEnabled": false
+}

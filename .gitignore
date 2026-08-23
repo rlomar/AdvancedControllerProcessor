@@ -1,0 +1,21 @@
+# Build artifacts
+[Bb]in/
+[Oo]bj/
+publish/
+*.exe
+*.pdb
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# User-local runtime config & logs (created next to the executable)
+AppSettings.json
+logs/
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
