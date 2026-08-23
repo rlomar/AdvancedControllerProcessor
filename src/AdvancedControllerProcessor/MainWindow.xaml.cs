@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using AdvancedControllerProcessor.Helpers;
@@ -22,6 +23,41 @@ public partial class MainWindow : Window
         InitializeComponent();
         Loaded += OnLoaded;
         Closing += OnClosing;
+
+        // Sliders swallow the mouse wheel to adjust their own value while the
+        // cursor rests on them, making long tabs feel impossible to scroll.
+        // Intercept at preview level (before sliders handle it) and redirect to
+        // the enclosing tab ScrollViewer instead.
+        AddHandler(Mouse.PreviewMouseWheelEvent,
+            new MouseWheelEventHandler(OnPreviewMouseWheelForScroll), handledEventsToo: true);
+    }
+
+    private void OnPreviewMouseWheelForScroll(object sender, MouseWheelEventArgs e)
+    {
+        if (e.OriginalSource is not DependencyObject source)
+            return;
+
+        if (FindAncestor<System.Windows.Controls.Slider>(source) is null)
+            return; // normal elements already bubble the wheel to the ScrollViewer
+
+        var viewer = FindAncestor<ScrollViewer>(source);
+        if (viewer is null || viewer.ScrollableHeight <= 0)
+            return;
+
+        viewer.ScrollToVerticalOffset(viewer.VerticalOffset - e.Delta / 3.0);
+        e.Handled = true;
+    }
+
+    private static T? FindAncestor<T>(DependencyObject start) where T : DependencyObject
+    {
+        var current = start;
+        while (current is not null)
+        {
+            if (current is T match)
+                return match;
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+        return null;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
