@@ -20,6 +20,8 @@ Transform your DualSense controller input with advanced processing — deadzones
 
 > ⚠️ **Closed-source software.** This repository hosts ready-to-run releases only. No source code is published here.
 
+> 🔒 **Mandatory updates.** Builds older than the latest release show a blocking update screen at startup and cannot be used until updated (in-app one-click, or manual download). Offline machines are never blocked. The floor can be raised any time via [`update-policy.json`](update-policy.json).
+
 ---
 
 ## ✨ Features

@@ -19,7 +19,7 @@ public partial class App : Application
 
     public static string ProfilesPath { get; } = ProfilesDirectory;
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
 
@@ -57,6 +57,30 @@ public partial class App : Application
             }
 
             Logging.Info("Mandatory requirements installed — continuing startup");
+        }
+
+        // ── Mandatory update gate ───────────────────────────────
+        // Any build older than the newest release (or below the
+        // update-policy.json floor) cannot run: it must self-update or exit.
+        // Offline / failed checks never block startup.
+        try
+        {
+            var requiredUpdate = await Services.UpdateChecker.GetRequiredUpdateAsync();
+            if (requiredUpdate is not null)
+            {
+                Logging.Warn(
+                    $"Build v{GetAppVersion()} is outdated — update to " +
+                    $"v{requiredUpdate.RequiredVersion.ToString(3)} enforced");
+                var gate = new MandatoryUpdateWindow(requiredUpdate);
+                gate.ShowDialog();
+                Logging.Info("Exiting after mandatory-update gate");
+                Shutdown(1);
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logging.Error(ex, "Mandatory-update check failed — continuing startup");
         }
 
         var main = new MainWindow();

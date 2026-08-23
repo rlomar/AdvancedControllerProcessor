@@ -4,16 +4,20 @@ namespace AdvancedControllerProcessor.Models;
 /// Complete controller state from a single poll.
 /// Contains all input data normalized to standard ranges.
 ///
+/// Struct (not class): this value is produced and consumed on every HID
+/// report (~250-1000x/second). Heap-allocating it caused constant GC churn
+/// that surfaced as periodic input stutters during long sessions.
+///
 /// Stick axes:  [-1.0, +1.0]  (center = 0.0)
 /// Triggers:    [0.0, 1.0]    (released = 0.0, pressed = 1.0)
 /// </summary>
-public sealed class ControllerState
+public readonly record struct ControllerState
 {
     /// <summary>Left analog stick position.</summary>
-    public StickState LeftStick { get; init; } = StickState.Center;
+    public StickState LeftStick { get; init; } // default = (0, 0) = Center
 
     /// <summary>Right analog stick position.</summary>
-    public StickState RightStick { get; init; } = StickState.Center;
+    public StickState RightStick { get; init; } // default = (0, 0) = Center
 
     /// <summary>Left trigger (L2) analog value. Range [0.0, 1.0].</summary>
     public float L2 { get; init; }

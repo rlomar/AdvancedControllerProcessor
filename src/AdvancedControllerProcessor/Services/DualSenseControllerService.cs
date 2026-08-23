@@ -236,7 +236,15 @@ public sealed class DualSenseControllerService : IControllerService
                     continue;
 
                 ConnectionType connType = DetectConnectionType(bytesRead);
-                ControllerState state = ParseReport(buffer, bytesRead, connType);
+                if (connType == ConnectionType.Unknown)
+                {
+                    // Unrecognized report shape (vendor-specific/capability frames):
+                    // parsing it with USB offsets would throw per-report, and each
+                    // exception hit the error path (disk log + 15 ms sleep) — a
+                    // constant-lag loop. Skip silently instead.
+                    continue;
+                }
+                ControllerState state = ParseReport(buffer, connType);
 
                 long nowTicks = sw.Elapsed.Ticks;
                 UpdateArrivalRate(nowTicks);
@@ -398,19 +406,21 @@ public sealed class DualSenseControllerService : IControllerService
 
     /// <summary>
     /// Parse a raw HID report into a ControllerState.
-    /// Handles both USB and Bluetooth report formats.
+    /// Callers must guarantee connType is USB or Bluetooth (unknown sizes are
+    /// skipped in the input loop, never parsed).
+    /// Internal so the hot path can be allocation-tested without hardware.
     /// </summary>
-    private static ControllerState ParseReport(byte[] buffer, int bytesRead, ConnectionType connType)
+    internal static ControllerState ParseReport(byte[] buffer, ConnectionType connType)
     {
         return connType switch
         {
             ConnectionType.USB => ParseUsbReport(buffer),
             ConnectionType.Bluetooth => ParseBluetoothReport(buffer),
-            _ => ParseUsbReport(buffer) // fallback
+            _ => ParseUsbReport(buffer) // unreachable from InputLoop
         };
     }
 
-    private static ControllerState ParseUsbReport(byte[] buffer)
+    internal static ControllerState ParseUsbReport(byte[] buffer)
     {
         return new ControllerState
         {
@@ -429,7 +439,7 @@ public sealed class DualSenseControllerService : IControllerService
         };
     }
 
-    private static ControllerState ParseBluetoothReport(byte[] buffer)
+    internal static ControllerState ParseBluetoothReport(byte[] buffer)
     {
         return new ControllerState
         {
