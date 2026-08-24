@@ -18,7 +18,7 @@ public sealed class AppSettings
     public bool MinimizeToTray { get; set; } = true;
 
     /// <summary>Start processing automatically when a controller is detected.</summary>
-    public bool AutoStartProcessing { get; set; }
+    public bool AutoStartProcessing { get; set; } = true;
 
     /// <summary>Hotkey to toggle processing ON/OFF. Default: F8.</summary>
     public int HotkeyToggleProcessing { get; set; } = 119; // Virtual key code for F8

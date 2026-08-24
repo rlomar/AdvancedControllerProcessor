@@ -39,27 +39,51 @@ public sealed class InputProcessingService : IInputProcessingService
     /// </summary>
     public ControllerState Process(ControllerState rawInput)
     {
+        // Defensive: neutralize any non-finite value before it enters the
+        // pipeline. NaN would otherwise propagate through smoothing state and
+        // make MathF.Sign throw ArithmeticException on every frame.
+        var left = Sanitize(rawInput.LeftStick);
+        var right = Sanitize(rawInput.RightStick);
+
         if (!ProcessingEnabled)
         {
-            // Pass-through: return raw input directly
-            return rawInput;
+            // Pass-through: sanitized input unmodified otherwise
+            return new ControllerState
+            {
+                LeftStick = left,
+                RightStick = right,
+                L2 = Sanitize01(rawInput.L2),
+                R2 = Sanitize01(rawInput.R2),
+                Buttons = rawInput.Buttons,
+                DPad = rawInput.DPad,
+                Connection = rawInput.Connection,
+                Timestamp = rawInput.Timestamp
+            };
         }
 
-        var leftStick = ProcessLeftStick(rawInput.LeftStick);
-        var rightStick = ProcessRightStick(rawInput.RightStick);
+        var leftStick = ProcessLeftStick(left);
+        var rightStick = ProcessRightStick(right);
 
         return new ControllerState
         {
             LeftStick = leftStick,
             RightStick = rightStick,
-            L2 = rawInput.L2,
-            R2 = rawInput.R2,
+            L2 = Sanitize01(rawInput.L2),
+            R2 = Sanitize01(rawInput.R2),
             Buttons = rawInput.Buttons,
             DPad = rawInput.DPad,
             Connection = rawInput.Connection,
             Timestamp = rawInput.Timestamp
         };
     }
+
+    private static StickState Sanitize(StickState s) =>
+        new(Sanitize(s.X), Sanitize(s.Y));
+
+    private static float Sanitize(float v) => float.IsFinite(v) ? v : 0f;
+
+    private static float Sanitize01(float v) =>
+        float.IsFinite(v) ? Math.Clamp(v, 0f, 1f) : 0f;
 
     /// <summary>
     /// Reset smoothing state for both sticks.
@@ -197,6 +221,8 @@ public sealed class InputProcessingService : IInputProcessingService
     {
         float abs = MathF.Abs(signedValue);
         float curved = curve.Evaluate(abs);
-        return MathF.Sign(signedValue) * curved;
+        // MathF.Sign throws ArithmeticException on NaN — use a branch instead.
+        float sign = signedValue < 0f ? -1f : signedValue > 0f ? 1f : 0f;
+        return sign * curved;
     }
 }

@@ -68,7 +68,10 @@ public partial class MainWindow : Window
 
         try
         {
-            KeysGrid.ItemsSource = await _admin.ListAsync();
+            var rows = await _admin.ListAsync();
+            foreach (var row in rows)
+                row.HasLocalPlain = IssuedKeyStore.TryGet(row.KeyHash) is not null;
+            KeysGrid.ItemsSource = rows;
             int count = KeysGrid.Items.Count;
             SetStatus($"{count} key{(count == 1 ? "" : "s")} loaded at {DateTime.Now:HH:mm:ss}.", warn: false);
         }
@@ -102,12 +105,25 @@ public partial class MainWindow : Window
         {
             await _admin.CreateAsync(hash, LabelInput.Text.Trim());
 
-            // Show plaintext exactly once.
+            // Show plaintext exactly once AND keep it in the local issued-keys log
+            // so it can be re-copied later from the grid.
             _lastGeneratedPlainKey = LicenseCrypto.FormatGrouped(normalized);
+            IssuedKeyStore.Append(hash, _lastGeneratedPlainKey, LabelInput.Text.Trim());
             NewKeyText.Text = _lastGeneratedPlainKey;
             CreateFormStep.Visibility = Visibility.Collapsed;
             CreateResultStep.Visibility = Visibility.Visible;
-            SetStatus("Key created. Copy it before closing — it cannot be recovered.", warn: true);
+
+            try
+            {
+                Clipboard.SetText(_lastGeneratedPlainKey);
+                CopyKeyBtn.Content = "Copied to clipboard ✓";
+                SetStatus("Key created and copied to your clipboard. It is also saved locally for re-copying.", warn: true);
+            }
+            catch
+            {
+                CopyKeyBtn.Content = "Copy Key";
+                SetStatus("Key created. Copy it now with the button — it cannot be recovered.", warn: true);
+            }
         }
         catch (Exception ex)
         {
@@ -121,6 +137,29 @@ public partial class MainWindow : Window
         {
             Clipboard.SetText(_lastGeneratedPlainKey);
             CopyKeyBtn.Content = "Copied ✓";
+        }
+    }
+
+    private void OnCopyRowKeyClick(object sender, RoutedEventArgs e)
+    {
+        string hash = (string)((Button)sender).Tag;
+        string? plain = IssuedKeyStore.TryGet(hash);
+
+        if (plain is null)
+        {
+            SetStatus("Plaintext for this key was not issued on this PC (only hashes are stored server-side).", warn: true);
+            return;
+        }
+
+        try
+        {
+            Clipboard.SetText(plain);
+            ((Button)sender).Content = "Copied ✓";
+            SetStatus($"Plaintext key {plain} copied to clipboard.", warn: false);
+        }
+        catch
+        {
+            SetStatus("Could not access the clipboard. The key is: " + plain, warn: true);
         }
     }
 

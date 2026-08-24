@@ -1,4 +1,4 @@
-using AdvancedControllerProcessor.Models;
+﻿using AdvancedControllerProcessor.Models;
 
 namespace AdvancedControllerProcessor.Processing;
 
@@ -76,7 +76,7 @@ public sealed class DeadzoneProcessor : IStickProcessor
             return 0f;
 
         float t = (abs - dz) / (1f - dz);
-        return MathF.Sign(input) * t;
+        return SignSafe(input) * t;
     }
 
     private static float ProcessAxial(float input, float dz)
@@ -86,7 +86,7 @@ public sealed class DeadzoneProcessor : IStickProcessor
             return 0f;
 
         float t = (abs - dz) / (1f - dz);
-        return MathF.Sign(input) * t;
+        return SignSafe(input) * t;
     }
 
     private static float ApplyAxial(float input, float dz)
@@ -96,6 +96,13 @@ public sealed class DeadzoneProcessor : IStickProcessor
             return 0f;
 
         float t = (abs - dz) / (1f - dz);
-        return MathF.Sign(input) * t;
+        return SignSafe(input) * t;
     }
+
+    /// <summary>
+    /// MathF.Sign throws ArithmeticException on NaN. This branch-based
+    /// equivalent maps NaN to 0 instead, keeping the input loop alive.
+    /// </summary>
+    private static float SignSafe(float v) => v < 0f ? -1f : v > 0f ? 1f : 0f;
 }
+

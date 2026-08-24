@@ -54,10 +54,12 @@ public static class Logging
     public static void Warn(string message) => Write("WARN", message);
 
     public static void Error(Exception ex, string message) =>
-        Write("ERROR", $"{message}: {ex.GetType().Name} - {ex.Message}");
+        Write("ERROR", $"{message}: {ex.GetType().Name} - {ex.Message}{Environment.NewLine}{ex.StackTrace}");
 
     public static void Fatal(Exception? ex, string message) =>
-        Write("FATAL", ex != null ? $"{message}: {ex.GetType().Name} - {ex.Message}" : message);
+        Write("FATAL", ex != null
+            ? $"{message}: {ex.GetType().Name} - {ex.Message}{Environment.NewLine}{ex.StackTrace}"
+            : message);
 
     private static void Write(string level, string message)
     {

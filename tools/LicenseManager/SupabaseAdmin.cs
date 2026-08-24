@@ -170,6 +170,9 @@ public sealed class LicenseRow
     public string DeviceShort { get; init; } = "—";
     public DateTime? ActivatedAt { get; init; }
 
+    /// <summary>True when this PC holds the plaintext for this hash locally.</summary>
+    public bool HasLocalPlain { get; set; }
+
     public string HashShort => KeyHash.Length >= 10 ? KeyHash[..10] + "…" : KeyHash;
     public string StatusText => Revoked ? "REVOKED" : DeviceShort == "—" ? "UNUSED" : "ACTIVE";
     public string CreatedText => CreatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—";

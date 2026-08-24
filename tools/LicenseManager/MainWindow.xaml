@@ -9,6 +9,10 @@
         TextOptions.TextFormattingMode="Ideal"
         UseLayoutRounding="True">
 
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </Window.Resources>
+
     <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -64,7 +68,8 @@
         </Border>
 
         <!-- ═══ Create-key overlay ═══ -->
-        <Border x:Name="CreateOverlay" Grid.Row="1" Grid.RowSpan="2" Background="#CC0B0E17"
+        <Border x:Name="CreateOverlay" Grid.Row="1" Grid.RowSpan="2" Panel.ZIndex="100"
+                Background="#CC0B0E17"
                 CornerRadius="12" Padding="24" Visibility="Collapsed">
             <StackPanel MaxWidth="520" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <!-- Step 1: label input -->
@@ -152,10 +157,14 @@
                                         Width="90" FontFamily="{StaticResource MonoFontFamily}" />
                     <DataGridTextColumn Header="Created" Binding="{Binding CreatedText}" Width="130" />
                     <DataGridTextColumn Header="Activated" Binding="{Binding ActivatedText}" Width="130" />
-                    <DataGridTemplateColumn Header="Actions" Width="220">
+                    <DataGridTemplateColumn Header="Actions" Width="290">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="Copy Key" Tag="{Binding KeyHash}"
+                                            Style="{StaticResource SecondaryButton}" FontSize="11" Padding="10,4"
+                                            Click="OnCopyRowKeyClick" Margin="0,0,5,0"
+                                            Visibility="{Binding HasLocalPlain, Converter={StaticResource BoolToVis}}" />
                                     <Button x:Name="RevokeBtn" Content="Revoke" Tag="{Binding KeyHash}"
                                             Style="{StaticResource DangerButton}" FontSize="11" Padding="10,4"
                                             Click="OnRevokeClick" Margin="0,0,5,0" />

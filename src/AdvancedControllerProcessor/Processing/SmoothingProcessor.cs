@@ -39,6 +39,15 @@ public sealed class SmoothingProcessor
             return input;
         }
 
+        // Never let a non-finite sample poison the EMA state — it would
+        // propagate NaN to every subsequent frame until the profile resets.
+        if (!float.IsFinite(input.X) || !float.IsFinite(input.Y))
+        {
+            _previousX = 0f;
+            _previousY = 0f;
+            return new StickState(0f, 0f);
+        }
+
         float amount = Math.Clamp(settings.SmoothingAmount, 0f, 0.95f);
         float oneMinusAmount = 1f - amount;
 
