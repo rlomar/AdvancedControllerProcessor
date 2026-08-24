@@ -60,6 +60,12 @@ public sealed class AppSettings
     /// </summary>
     public int PollingRateHz { get; set; } = Services.PollingRate.Default;
 
+    /// <summary>
+    /// Activated license key (normalized form). Empty until the user has
+    /// activated. Only the key is stored — validation always happens online.
+    /// </summary>
+    public string LicenseKey { get; set; } = string.Empty;
+
     /// <summary>Log level: "None", "Error", "Info".</summary>
     public string LogLevel { get; set; } = "Info";
 

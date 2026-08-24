@@ -20,7 +20,9 @@ Transform your DualSense controller input with advanced processing — deadzones
 
 > ⚠️ **Closed-source software.** This repository hosts ready-to-run releases only. No source code is published here.
 
-> 🔒 **Mandatory updates.** Builds older than the latest release show a blocking update screen at startup and cannot be used until updated (in-app one-click, or manual download). Offline machines are never blocked. The floor can be raised any time via [`update-policy.json`](update-policy.json).
+> 🔒 **License required.** Every device needs an activation key issued by **Blank RL**. An internet connection is required to activate and to keep the program running. Contact Blank RL to get your key.
+
+> 🔄 **Mandatory updates.** Builds older than the latest release show a blocking update screen at startup and cannot be used until updated (in-app one-click, or manual download). The floor can be raised any time via [`update-policy.json`](update-policy.json).
 
 ---
 
@@ -32,9 +34,30 @@ Transform your DualSense controller input with advanced processing — deadzones
 - 🧭 **Directional speed** — separate forward/backward/left/right tuning
 - 🌊 **Input smoothing**
 - 👀 **Live monitor** — real-time raw vs processed stick visualization
+- 📊 **Latency monitor** — live pipeline & scheduling-wait stats on the dashboard
 - 💾 **Profiles** — save / load / export / import
 - ⌨️ **Hotkeys** — F8 toggles processing · F9 safe-mode reset
 - 🎯 **Virtual output** — Xbox 360 (XInput) or DualShock 4
+
+---
+
+## 🔑 Activation (one time per PC)
+
+1. Get your license key from **Blank RL**
+2. Run the program — the activation window opens automatically
+3. Type/paste your key (`XXXX-XXXX-XXXX-XXXX`) and click **Activate**
+
+That's it — the key binds to your device automatically (1 device per key).
+Changed your PC or reinstalled Windows? Contact Blank RL to reset the binding.
+
+### Activation problems?
+
+| Message | Meaning |
+|---------|---------|
+| *Key was not recognized* | Typo in the key — check every character |
+| *Key has been revoked* | The key was disabled by Blank RL |
+| *Already bound to another device* | The key is used on another PC — ask Blank RL to reset it |
+| *Could not reach activation server* | Check your internet connection and retry |
 
 ---
 
@@ -56,6 +79,8 @@ Click **More info → Run anyway**. This is normal for unsigned indie software.
 | Requirement | Notes |
 |-------------|-------|
 | Windows 10 / 11 (64-bit) | Required |
+| Internet connection | Required — license validation happens at startup and periodically |
+| License key | Get yours from **Blank RL** — see [Activation](#-activation-one-time-per-pc) |
 | [ViGEmBus driver](https://vigem.org/downloads/) | **Mandatory** — powers the virtual controllers. The app detects it automatically on startup and guides you through installation if missing |
 | HidHide driver *(optional)* | Hides your physical controller so games only see the virtual one |
 

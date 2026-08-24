@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using AdvancedControllerProcessor.Helpers;
 using AdvancedControllerProcessor.Models;
@@ -28,6 +29,15 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private int _measuredPollingRate = PollingRate.Default;
     private int _measuredRawRate;
 
+    // License re-validation (mid-session revocation enforcement)
+    private readonly LicenseService? _licenseService;
+    private System.Windows.Threading.DispatcherTimer? _licenseTimer;
+    private bool _licenseChecking;
+    private bool _processingBeforeLicensePause;
+
+    // Latency card refresh throttle
+    private DateTime _lastLatencyRefresh = DateTime.MinValue;
+
     // Thread dispatcher for UI updates
     private readonly SynchronizationContext? _syncContext;
     private DateTime _lastUiUpdate = DateTime.MinValue;
@@ -41,6 +51,10 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         var appDir = AppDomain.CurrentDomain.BaseDirectory;
         _configService = new ConfigurationService(appDir);
         _profileService = new ProfileService(Path.Combine(appDir, "Profiles"));
+
+        // Reuse the license service created by the startup gate so the saved
+        // key and validation state stay consistent across components.
+        _licenseService = App.CurrentLicenseService;
 
         _processingService = new InputProcessingService();
         _controllerService = new DualSenseControllerService();
@@ -78,6 +92,8 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             LoadProfile("Default");
 
         StatusMessage = "Ready. Connect a DualSense controller.";
+
+        StartLicenseWatch();
     }
 
     // ── Child ViewModels ──────────────────────────────────
@@ -375,15 +391,150 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         }
     }
 
+    // ── License Re-validation ─────────────────────────────
+
+    /// <summary>
+    /// Periodically re-validates the saved license (every 15 minutes) so a
+    /// revoked key stops working mid-session. Transient network failures are
+    /// ignored — the next cycle retries; definitive failures pause the
+    /// controller and re-open the activation window.
+    /// </summary>
+    private void StartLicenseWatch()
+    {
+        if (_licenseService is null || _licenseTimer is not null)
+            return;
+
+        _licenseTimer = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = TimeSpan.FromMinutes(15)
+        };
+        _licenseTimer.Tick += async (_, _) => await LicenseCheckTickAsync();
+        _licenseTimer.Start();
+    }
+
+    private async Task LicenseCheckTickAsync()
+    {
+        if (_licenseChecking || _licenseService is null)
+            return;
+
+        _licenseChecking = true;
+        try
+        {
+            LicenseStatus status = await _licenseService.ValidateSavedAsync();
+
+            if (status == LicenseStatus.Ok || status.IsTransient())
+                return; // valid, or just a network hiccup — next cycle retries
+
+            Logging.Warn($"[License] Mid-session validation failed: {status} — pausing controller");
+
+            _processingBeforeLicensePause = IsProcessingEnabled;
+            StopController();
+            IsProcessingEnabled = false;
+            StatusMessage = "License no longer valid — processing paused";
+
+            var window = new ActivationWindow(_licenseService, ActivationWindow.Describe(status))
+            {
+                Owner = System.Windows.Application.Current?.MainWindow
+            };
+            bool reactivated = window.ShowDialog() == true;
+
+            StartController();
+            if (_processingBeforeLicensePause)
+                IsProcessingEnabled = true;
+
+            StatusMessage = reactivated
+                ? "License re-activated — controller resumed"
+                : "Running without a valid license — processing off";
+        }
+        catch (Exception ex)
+        {
+            Logging.Error(ex, "[License] Mid-session check crashed");
+        }
+        finally
+        {
+            _licenseChecking = false;
+        }
+    }
+
+    // ── Latency Monitor ───────────────────────────────────
+
+    /// <summary>
+    /// Refreshes latency display strings at ~2 Hz. Called from the UI timer;
+    /// cheap by design (snapshot of pre-aggregated statistics).
+    /// </summary>
+    public void RefreshLatencyIfNeeded()
+    {
+        DateTime now = DateTime.UtcNow;
+        if (now - _lastLatencyRefresh < TimeSpan.FromMilliseconds(500))
+            return;
+
+        _lastLatencyRefresh = now;
+
+        var pipeline = Latency.Pipeline.Snapshot();
+        var wait = Latency.Wait.Snapshot();
+
+        PipelineAvgText = pipeline.Count == 0 ? "—" : $"{pipeline.Average:F0} µs";
+        PipelineMaxText = pipeline.Count == 0 ? "—" : $"{pipeline.Max:F0} µs";
+        PipelineP95Text = pipeline.Count == 0 ? "— " : $"{pipeline.P95:F0} µs";
+
+        WaitAvgText = wait.Count == 0 ? "—" : $"{wait.Average / 1000.0:F2} ms";
+        WaitMaxText = wait.Count == 0 ? "—" : $"{wait.Max / 1000.0:F2} ms";
+        WaitP95Text = wait.Count == 0 ? "— " : $"{wait.P95 / 1000.0:F2} ms";
+        WaitModeText = wait.Count == 0
+            ? string.Empty
+            : wait.Average < 100
+                ? "event-driven (no added delay)"
+                : "paced submissions";
+
+        // Health: driven by the worse of the two components.
+        double worstUs = Math.Max(pipeline.P95, wait.P95);
+        LatencyHealthText = pipeline.Count == 0 && wait.Count == 0
+            ? "idle"
+            : worstUs <= 500 ? "excellent"
+            : worstUs <= 2000 ? "good"
+            : worstUs <= 8000 ? "elevated"
+            : "high";
+
+        LatencyHealthBrush = ResolveBrush(LatencyHealthText switch
+        {
+            "excellent" or "idle" => "SuccessBrush",
+            "good" => "WarningBrush",
+            _ => "DangerBrush"
+        });
+    }
+
+    private static System.Windows.Media.Brush ResolveBrush(string resourceKey) =>
+        System.Windows.Application.Current?.TryFindResource(resourceKey)
+            as System.Windows.Media.Brush
+        ?? System.Windows.Media.Brushes.Gray;
+
+    public string PipelineAvgText { get; private set; } = "—";
+    public string PipelineMaxText { get; private set; } = "—";
+    public string PipelineP95Text { get; private set; } = "— ";
+    public string WaitAvgText { get; private set; } = "—";
+    public string WaitMaxText { get; private set; } = "—";
+    public string WaitP95Text { get; private set; } = "— ";
+    public string WaitModeText { get; private set; } = string.Empty;
+    public string LatencyHealthText { get; private set; } = "idle";
+
+    public System.Windows.Media.Brush LatencyHealthBrush { get; private set; } =
+        System.Windows.Media.Brushes.Gray;
+
     // ── Event Handlers ────────────────────────────────────
 
     private void OnControllerStateChanged(ControllerState rawState)
     {
+        long pipelineStart = Stopwatch.GetTimestamp();
+
         // Process input through pipeline
         ControllerState processedState = _processingService.Process(rawState);
 
         // Send to virtual controller
         _virtualService.SubmitState(processedState);
+
+        // Record end-to-end software latency (process + bus submission)
+        Latency.Pipeline.Record((long)((Stopwatch.GetTimestamp() - pipelineStart) * 1_000_000
+                                       / (double)Stopwatch.Frequency));
 
         // Update UI at limited rate (~30 FPS)
         var now = DateTime.UtcNow;
@@ -469,6 +620,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
         _controllerService.Stop();
         _virtualService.Remove();
+        _licenseTimer?.Stop();
         _configService.Save();
     }
 }

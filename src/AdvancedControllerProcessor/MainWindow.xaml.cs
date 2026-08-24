@@ -135,6 +135,9 @@ public partial class MainWindow : Window
     {
         if (_vm is null) return;
 
+        // Latency card (~2 Hz internal throttle)
+        _vm.RefreshLatencyIfNeeded();
+
         // Left Stick visualizer (dashboard)
         LeftStickVisualizer?.UpdatePosition(
             _vm.LeftStick.RawX, _vm.LeftStick.RawY,

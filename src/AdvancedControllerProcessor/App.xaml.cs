@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Windows;
 using System.Windows.Threading;
 using AdvancedControllerProcessor.Helpers;
+using AdvancedControllerProcessor.Models;
 
 namespace AdvancedControllerProcessor;
 
@@ -18,6 +19,12 @@ public partial class App : Application
         Path.Combine(LogDirectory, "app.log");
 
     public static string ProfilesPath { get; } = ProfilesDirectory;
+
+    /// <summary>
+    /// Shared license/config services created by the startup gate and reused
+    /// by MainViewModel so every component reads/writes one consistent state.
+    /// </summary>
+    internal static Services.LicenseService? CurrentLicenseService { get; private set; }
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -81,6 +88,60 @@ public partial class App : Application
         catch (Exception ex)
         {
             Logging.Error(ex, "Mandatory-update check failed — continuing startup");
+        }
+
+        // ── License activation gate ─────────────────────────────
+        // Strictly online: a valid key bound to this device is required on
+        // every startup. Transient network failures get a grace window of
+        // retries; definitive failures (revoked / wrong device) block at once.
+        var configService = new Services.ConfigurationService(AppDomain.CurrentDomain.BaseDirectory);
+        var licenseService = new Services.LicenseService(configService);
+        CurrentLicenseService = licenseService;
+
+        try
+        {
+            if (licenseService.SavedKey is null)
+            {
+                Logging.Info("[License] No saved key — showing activation window");
+                var activation = new ActivationWindow(licenseService);
+                if (activation.ShowDialog() != true)
+                {
+                    Logging.Info("Startup aborted: program was not activated");
+                    Shutdown(1);
+                    return;
+                }
+                Logging.Info("[License] Program activated successfully");
+            }
+            else
+            {
+                LicenseStatus status = await licenseService.ValidateWithGraceAsync();
+                if (status != LicenseStatus.Ok)
+                {
+                    Logging.Warn($"[License] Startup validation failed: {status}");
+                    var reactivation = new ActivationWindow(
+                        licenseService, ActivationWindow.Describe(status));
+                    if (reactivation.ShowDialog() != true)
+                    {
+                        Logging.Info("Startup aborted: license validation failed");
+                        Shutdown(1);
+                        return;
+                    }
+                    Logging.Info("[License] Re-activated successfully");
+                }
+                else
+                {
+                    Logging.Info("[License] Startup validation OK");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logging.Error(ex, "[License] Activation gate crashed — blocking startup");
+            MessageBox.Show(
+                "Activation check failed unexpectedly. Please restart the program.",
+                "Activation Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            Shutdown(1);
+            return;
         }
 
         var main = new MainWindow();

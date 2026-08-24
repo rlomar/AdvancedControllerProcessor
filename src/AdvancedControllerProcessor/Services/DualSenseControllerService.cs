@@ -286,7 +286,14 @@ public sealed class DualSenseControllerService : IControllerService
                 }
 
                 if (submit)
+                {
+                    // Scheduling wait: how long this report was held between
+                    // arrival and delivery to the virtual pad (0 when
+                    // event-driven). Feeds the dashboard latency monitor.
+                    long submitTicks = sw.Elapsed.Ticks;
+                    Latency.Wait.Record((submitTicks - nowTicks) / TimeSpan.TicksPerMicrosecond);
                     StateChanged?.Invoke(state);
+                }
             }
             catch (ThreadInterruptedException)
             {

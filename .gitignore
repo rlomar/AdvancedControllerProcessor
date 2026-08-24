@@ -16,6 +16,9 @@ AppSettings.json
 logs/
 *.log
 
+# Owner-only license material — NEVER commit plaintext keys
+tools/my-keys.txt
+
 # OS
 Thumbs.db
 .DS_Store

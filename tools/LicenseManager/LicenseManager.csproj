@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>LicenseManager</RootNamespace>
+    <AssemblyName>LicenseManager</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>Blank RL</Authors>
+    <Company>Blank RL</Company>
+    <Product>ACP License Manager</Product>
+    <Description>Private admin tool for managing Advanced Controller Processor licenses. NEVER distribute this executable.</Description>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <!-- No external packages on purpose: only framework libraries are used,
+       so the tool stays a small self-contained single-file exe. -->
+
+</Project>
