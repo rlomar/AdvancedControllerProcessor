@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -8,11 +8,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>AdvancedControllerProcessor</RootNamespace>
     <AssemblyName>AdvancedControllerProcessor</AssemblyName>
-    <Version>1.5.1</Version>
+    <Version>1.5.2</Version>
     <Authors>Blank RL</Authors>
     <Company>Blank RL</Company>
     <Product>Advanced Controller Processor</Product>
-    <Copyright>Copyright Â© Blank RL. All rights reserved.</Copyright>
+    <Copyright>Copyright © Blank RL. All rights reserved.</Copyright>
     <Description>PS5 DualSense to virtual Xbox 360 / DualShock 4 controller processor for Windows</Description>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>Resources\BlankRL.ico</ApplicationIcon>
@@ -39,5 +39,6 @@
   </ItemGroup>
 
 </Project>
+
 
 

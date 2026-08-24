@@ -40,6 +40,14 @@ public partial class App : Application
         // input delay creeps back in.
         TryElevateProcessPriority();
 
+        // Prevent GC from introducing latency spikes: with the allocation-free
+        // pipeline there is almost nothing to collect, so blocking for a Gen2
+        // pass buys nothing and can stall a frame.
+        System.Runtime.GCSettings.LatencyMode = System.Runtime.GCLatencyMode.SustainedLowLatency;
+
+        // MMCSS "Games" + power-throttling opt-out (process-wide, once).
+        Helpers.InputThreadOptimizer.Prepare();
+
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;

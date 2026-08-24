@@ -174,6 +174,7 @@ public sealed class DualSenseControllerService : IControllerService
             Priority = ThreadPriority.AboveNormal,
             IsBackground = true
         };
+        Helpers.InputThreadOptimizer.Prepare();
         _inputThread.Start();
     }
 
@@ -192,6 +193,9 @@ public sealed class DualSenseControllerService : IControllerService
 
     private void InputLoop()
     {
+        // Pin to performance cores first — never run input on an E-core.
+        Helpers.InputThreadOptimizer.ApplyToThisThread();
+
         var token = _cts?.Token ?? CancellationToken.None;
         var buffer = new byte[BluetoothReportSize]; // max size
         var sw = Stopwatch.StartNew();
