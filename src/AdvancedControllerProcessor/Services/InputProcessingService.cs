@@ -20,16 +20,6 @@ public sealed class InputProcessingService : IInputProcessingService
     private readonly SmoothingProcessor _leftSmoothing = new();
     private readonly SmoothingProcessor _rightSmoothing = new();
 
-    // Per-stick curve cache. The hot path runs 250-1000x/second; resolving a
-    // CustomCurve there would allocate a list-backed object every frame and
-    // cause GC churn that surfaces as periodic stutters in long sessions.
-    private string _leftCurveName = string.Empty;
-    private List<CurvePoint>? _leftCurvePoints;
-    private IResponseCurve _leftCurve = LinearCurve.Instance;
-    private string _rightCurveName = string.Empty;
-    private List<CurvePoint>? _rightCurvePoints;
-    private IResponseCurve _rightCurve = LinearCurve.Instance;
-
     public bool ProcessingEnabled { get; set; }
     public Profile CurrentProfile { get; set; } = Profile.Default();
 
@@ -39,51 +29,27 @@ public sealed class InputProcessingService : IInputProcessingService
     /// </summary>
     public ControllerState Process(ControllerState rawInput)
     {
-        // Defensive: neutralize any non-finite value before it enters the
-        // pipeline. NaN would otherwise propagate through smoothing state and
-        // make MathF.Sign throw ArithmeticException on every frame.
-        var left = Sanitize(rawInput.LeftStick);
-        var right = Sanitize(rawInput.RightStick);
-
         if (!ProcessingEnabled)
         {
-            // Pass-through: sanitized input unmodified otherwise
-            return new ControllerState
-            {
-                LeftStick = left,
-                RightStick = right,
-                L2 = Sanitize01(rawInput.L2),
-                R2 = Sanitize01(rawInput.R2),
-                Buttons = rawInput.Buttons,
-                DPad = rawInput.DPad,
-                Connection = rawInput.Connection,
-                Timestamp = rawInput.Timestamp
-            };
+            // Pass-through: return raw input directly
+            return rawInput;
         }
 
-        var leftStick = ProcessLeftStick(left);
-        var rightStick = ProcessRightStick(right);
+        var leftStick = ProcessLeftStick(rawInput.LeftStick);
+        var rightStick = ProcessRightStick(rawInput.RightStick);
 
         return new ControllerState
         {
             LeftStick = leftStick,
             RightStick = rightStick,
-            L2 = Sanitize01(rawInput.L2),
-            R2 = Sanitize01(rawInput.R2),
+            L2 = rawInput.L2,
+            R2 = rawInput.R2,
             Buttons = rawInput.Buttons,
             DPad = rawInput.DPad,
             Connection = rawInput.Connection,
             Timestamp = rawInput.Timestamp
         };
     }
-
-    private static StickState Sanitize(StickState s) =>
-        new(Sanitize(s.X), Sanitize(s.Y));
-
-    private static float Sanitize(float v) => float.IsFinite(v) ? v : 0f;
-
-    private static float Sanitize01(float v) =>
-        float.IsFinite(v) ? Math.Clamp(v, 0f, 1f) : 0f;
 
     /// <summary>
     /// Reset smoothing state for both sticks.
@@ -118,9 +84,7 @@ public sealed class InputProcessingService : IInputProcessingService
             : raw;
 
         // 2. Response Curve
-        var curve = GetCachedCurve(
-            ref _leftCurveName, ref _leftCurvePoints, ref _leftCurve,
-            settings.ResponseCurve, settings.CustomCurvePoints);
+        var curve = ResolveCurve(settings.ResponseCurve, settings.CustomCurvePoints);
         StickState step2 = new StickState(
             ApplyCurveWithSign(step1.X, curve),
             ApplyCurveWithSign(step1.Y, curve));
@@ -160,9 +124,7 @@ public sealed class InputProcessingService : IInputProcessingService
                 : DeadzoneProcessor.ProcessRadial(raw, settings.Deadzone))
             : raw;
 
-        var curve = GetCachedCurve(
-            ref _rightCurveName, ref _rightCurvePoints, ref _rightCurve,
-            settings.ResponseCurve, settings.CustomCurvePoints);
+        var curve = ResolveCurve(settings.ResponseCurve, settings.CustomCurvePoints);
         StickState step2 = new StickState(
             ApplyCurveWithSign(step1.X, curve),
             ApplyCurveWithSign(step1.Y, curve));
@@ -187,30 +149,9 @@ public sealed class InputProcessingService : IInputProcessingService
         {
             "Soft" => SoftCurve.Instance,
             "Aggressive" => AggressiveCurve.Instance,
-            "Fast" => FastCurve.Instance,
             "Custom" => new CustomCurve(customPoints ?? []),
             _ => LinearCurve.Instance // "Linear" or unknown
         };
-    }
-
-    /// <summary>
-    /// Cached variant of <see cref="ResolveCurve"/> for the hot path.
-    /// Rebuilds only when the curve name or the point-list instance changes.
-    /// The UI pushes brand-new settings objects on every edit, so reference
-    /// equality is a precise change signal: cache hits for every frame between
-    /// user edits, one rebuild per edit, zero allocations in steady state.
-    /// </summary>
-    private static IResponseCurve GetCachedCurve(
-        ref string cachedName, ref List<CurvePoint>? cachedPoints, ref IResponseCurve cachedCurve,
-        string curveName, List<CurvePoint>? customPoints)
-    {
-        if (cachedName == curveName && ReferenceEquals(cachedPoints, customPoints))
-            return cachedCurve;
-
-        cachedCurve = ResolveCurve(curveName, customPoints);
-        cachedName = curveName;
-        cachedPoints = customPoints;
-        return cachedCurve;
     }
 
     /// <summary>
@@ -222,8 +163,6 @@ public sealed class InputProcessingService : IInputProcessingService
     {
         float abs = MathF.Abs(signedValue);
         float curved = curve.Evaluate(abs);
-        // MathF.Sign throws ArithmeticException on NaN — use a branch instead.
-        float sign = signedValue < 0f ? -1f : signedValue > 0f ? 1f : 0f;
-        return sign * curved;
+        return MathF.Sign(signedValue) * curved;
     }
 }

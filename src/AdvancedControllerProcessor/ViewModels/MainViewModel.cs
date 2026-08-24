@@ -79,7 +79,6 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _controllerService.StateChanged += OnControllerStateChanged;
         _controllerService.ConnectionChanged += OnConnectionChanged;
         _controllerService.MeasuredRateChanged += OnMeasuredRateChanged;
-        _controllerService.RawRateChanged += OnRawRateChanged;
         _virtualService.ControllerCreated += OnVirtualCreated;
         _virtualService.ControllerRemoved += OnVirtualRemoved;
 
@@ -272,16 +271,6 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private void OnMeasuredRateChanged(int hz)
     {
         void UpdateUi() => MeasuredPollingRate = hz;
-
-        if (_syncContext is not null)
-            _syncContext.Post(_ => UpdateUi(), null);
-        else
-            UpdateUi();
-    }
-
-    private void OnRawRateChanged(int hz)
-    {
-        void UpdateUi() => MeasuredRawRate = hz;
 
         if (_syncContext is not null)
             _syncContext.Post(_ => UpdateUi(), null);
@@ -614,7 +603,6 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _controllerService.StateChanged -= OnControllerStateChanged;
         _controllerService.ConnectionChanged -= OnConnectionChanged;
         _controllerService.MeasuredRateChanged -= OnMeasuredRateChanged;
-        _controllerService.RawRateChanged -= OnRawRateChanged;
         _virtualService.ControllerCreated -= OnVirtualCreated;
         _virtualService.ControllerRemoved -= OnVirtualRemoved;
 

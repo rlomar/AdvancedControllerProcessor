@@ -39,7 +39,7 @@
                                Style="{StaticResource HeaderText}" VerticalAlignment="Center" />
                     <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="6"
                             Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v1.5.3" FontSize="11" FontWeight="Bold"
+                        <TextBlock Text="v1.5.4" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource AccentHoverBrush}" />
                     </Border>
                 </StackPanel>
@@ -301,7 +301,6 @@
                                     <ComboBoxItem Content="Linear" IsSelected="True" />
                                     <ComboBoxItem Content="Soft" />
                                     <ComboBoxItem Content="Aggressive" />
-                                    <ComboBoxItem Content="Fast" />
                                     <ComboBoxItem Content="Custom" />
                                 </ComboBox>
 
@@ -496,12 +495,11 @@
                                 <!-- Response Curve -->
                                 <TextBlock Text="Response Curve" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
                                 <ComboBox Style="{StaticResource ModernComboBox}"
-                                          SelectedValue="{Binding RightStick.Processing.ResponseCurve}"
+                                                SelectedValue="{Binding RightStick.Processing.ResponseCurve}"
                                           SelectedValuePath="Content">
                                     <ComboBoxItem Content="Linear" />
                                     <ComboBoxItem Content="Soft" />
                                     <ComboBoxItem Content="Aggressive" />
-                                    <ComboBoxItem Content="Fast" />
                                     <ComboBoxItem Content="Custom" />
                                 </ComboBox>
 
@@ -682,7 +680,7 @@
                                     <Image Source="Resources/BlankRL.ico" Width="34" Height="34"
                                            VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                                     <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Advanced Controller Processor v1.5.3" FontWeight="SemiBold" FontSize="13.5" />
+                                        <TextBlock Text="Advanced Controller Processor v1.5.4" FontWeight="SemiBold" FontSize="13.5" />
                                         <TextBlock Text="Â© 2026 Blank RL â€” All rights reserved." FontSize="11.5"
                                                    Foreground="{StaticResource AccentHoverBrush}" Margin="0,2,0,0" />
                                     </StackPanel>

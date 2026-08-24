@@ -75,20 +75,6 @@ public class SettingsFlowTests
     }
 
     [Fact]
-    public void FastCurve_ChangedInUi_AppliesToOutput()
-    {
-        var (left, _, svc) = CreateWiredPipeline();
-
-        svc.ProcessingEnabled = true;
-        left.ResponseCurve = "Fast"; // strongest boost: x^0.5
-
-        var raw = new ControllerState { LeftStick = new StickState(0.25f, 0f) };
-        var processed = svc.Process(raw);
-
-        Assert.Equal(0.5f, processed.LeftStick.X, 3); // sqrt(0.25)
-    }
-
-    [Fact]
     public void Deadzone_ChangedInUi_AppliesToOutput()
     {
         var (left, _, svc) = CreateWiredPipeline();

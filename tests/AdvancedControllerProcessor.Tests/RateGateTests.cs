@@ -96,33 +96,6 @@ public class RateGateTests
     }
 
     [Theory]
-    [InlineData(1, 40)]   // target 1000 Hz (1 ms) vs 250 Hz hardware (4 ms) -> passthrough
-    [InlineData(2, 40)]   // target 500 Hz vs 250 Hz hardware -> passthrough
-    [InlineData(4, 40)]   // target 250 Hz vs 250 Hz hardware -> passthrough (event-driven)
-    [InlineData(8, 40)]   // target 125 Hz vs 250 Hz hardware -> paced
-    public void ShouldPassThrough_WhenTargetNotLongerThanArrival(long periodMs, long arrivalEmaMs)
-    {
-        Assert.True(DualSenseControllerService.ShouldPassThrough(periodMs * MsTick, arrivalEmaMs * MsTick));
-    }
-
-    [Fact]
-    public void ShouldPassThrough_ZeroEma_NeverPassesThrough()
-    {
-        // No EMA data yet -> must fall back to pacing, never burst
-        Assert.False(DualSenseControllerService.ShouldPassThrough(MsTick, 0));
-    }
-
-    [Theory]
-    [InlineData(40000, 250)]  // 4 ms gap -> 250 Hz
-    [InlineData(20000, 500)]  // 2 ms gap -> 500 Hz
-    [InlineData(10000, 1000)] // 1 ms gap -> 1000 Hz
-    [InlineData(0, 0)]
-    public void ComputeRawHz_ConvertsEmaGapToHz(long emaTicks, int expectedHz)
-    {
-        Assert.Equal(expectedHz, DualSenseControllerService.ComputeRawHz(emaTicks));
-    }
-
-    [Theory]
     [InlineData(124, 125)]
     [InlineData(125, 125)]
     [InlineData(249, 249)]
