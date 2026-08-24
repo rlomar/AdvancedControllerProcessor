@@ -6,6 +6,9 @@ namespace AdvancedControllerProcessor.ViewModels;
 /// <summary>
 /// ViewModel for Right Stick settings and live visualization data.
 /// Default: ProcessingEnabled = false (pass-through).
+///
+/// When processing is enabled, the full stick pipeline applies using the
+/// nested <see cref="Processing"/> settings (deadzone, curve, speed, ...).
 /// </summary>
 public sealed class RightStickViewModel : ViewModelBase
 {
@@ -16,6 +19,19 @@ public sealed class RightStickViewModel : ViewModelBase
     private float _rawY;
     private float _processedX;
     private float _processedY;
+
+    /// <summary>
+    /// Full per-stick processing settings applied when <see cref="ProcessingEnabled"/> is true.
+    /// Reuses the same editor surface as the left stick.
+    /// </summary>
+    public LeftStickViewModel Processing { get; } = new();
+
+    public RightStickViewModel()
+    {
+        // Bubble inner-settings edits to this VM's OnChanged so the main
+        // coordinator pushes them into the live pipeline immediately.
+        Processing.OnChanged = () => _onChanged?.Invoke();
+    }
 
     /// <summary>
     /// Callback invoked when any processing setting changes.
@@ -70,10 +86,12 @@ public sealed class RightStickViewModel : ViewModelBase
 
     public void LoadFrom(RightStickSettings settings)
     {
+        // Suppress our own callback; Processing.LoadFrom suppresses its own.
         _suppressCallbacks = true;
         try
         {
             ProcessingEnabled = settings.ProcessingEnabled;
+            Processing.LoadFrom(settings.Settings ?? ProcessingSettings.PassThrough());
         }
         finally
         {
@@ -84,7 +102,7 @@ public sealed class RightStickViewModel : ViewModelBase
     public RightStickSettings ToSettings() => new()
     {
         ProcessingEnabled = ProcessingEnabled,
-        Settings = null
+        Settings = Processing.ToSettings()
     };
 
     public void UpdateLiveData(float rawX, float rawY, float processedX, float processedY)

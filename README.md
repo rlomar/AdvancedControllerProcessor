@@ -29,7 +29,7 @@ Transform your DualSense controller input with advanced processing — deadzones
 ## ✨ Features
 
 - 🎮 **DualSense support** — USB & Bluetooth
-- 🕹️ **Per-stick processing** — Deadzone, Response Curves (Linear / Soft / Aggressive / Custom)
+- 🕹️ **Per-stick processing** — Deadzone, Response Curves (Linear / Soft / Aggressive / Fast / Custom)
 - ⚡ **Speed multipliers** — independent X/Y axis scaling
 - 🧭 **Directional speed** — separate forward/backward/left/right tuning
 - 🌊 **Input smoothing**

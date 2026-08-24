@@ -621,6 +621,22 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _controllerService.Stop();
         _virtualService.Remove();
         _licenseTimer?.Stop();
+
+        // Persist the live UI state into the active profile so tuning survives
+        // restarts. Without this, every edit is lost on exit and the next
+        // launch reloads the stale on-disk profile (feels like "reset to
+        // default"). Manual Save still works exactly as before.
+        try
+        {
+            _currentProfile.LeftStick = LeftStick.ToSettings();
+            _currentProfile.RightStick = RightStick.ToSettings();
+            _profileService.Save(_currentProfile);
+        }
+        catch (Exception ex)
+        {
+            Logging.Error(ex, "Failed to auto-save profile on exit");
+        }
+
         _configService.Save();
     }
 }

@@ -39,7 +39,7 @@
                                Style="{StaticResource HeaderText}" VerticalAlignment="Center" />
                     <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="6"
                             Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Text="v1.5.2" FontSize="11" FontWeight="Bold"
+                        <TextBlock Text="v1.5.3" FontSize="11" FontWeight="Bold"
                                    Foreground="{StaticResource AccentHoverBrush}" />
                     </Border>
                 </StackPanel>
@@ -294,7 +294,6 @@
                                              TextAlignment="Center" Margin="8,0,0,0" />
                                 </Grid>
 
-                                <!-- Response Curve -->
                                 <TextBlock Text="Response Curve" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
                                 <ComboBox Style="{StaticResource ModernComboBox}"
                                           SelectedValue="{Binding LeftStick.ResponseCurve}"
@@ -302,6 +301,7 @@
                                     <ComboBoxItem Content="Linear" IsSelected="True" />
                                     <ComboBoxItem Content="Soft" />
                                     <ComboBoxItem Content="Aggressive" />
+                                    <ComboBoxItem Content="Fast" />
                                     <ComboBoxItem Content="Custom" />
                                 </ComboBox>
 
@@ -469,13 +469,106 @@
                                 <CheckBox Content="Enable Right Stick Processing"
                                           Style="{StaticResource ModernCheckBox}"
                                           IsChecked="{Binding RightStick.ProcessingEnabled}" Margin="0,0,0,8" />
+                                <TextBlock Text="When disabled, right stick input passes through unmodified."
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap" FontSize="11.5" Margin="0,0,0,10" />
 
-                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="12"
-                                        IsEnabled="{Binding RightStick.ProcessingEnabled, Converter={StaticResource InverseBool}}">
-                                    <TextBlock Text="Right Stick is in PASS-THROUGH mode. Raw input goes directly to the virtual controller without any processing."
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap" FontSize="12" />
-                                </Border>
+                                <!-- Deadzone -->
+                                <TextBlock Text="Deadzone" Style="{StaticResource LabelStyle}" Margin="0,8,0,4" />
+                                <CheckBox Content="Enable Deadzone"
+                                          Style="{StaticResource ModernCheckBox}"
+                                          IsChecked="{Binding RightStick.Processing.DeadzoneEnabled}" Margin="0,0,0,8" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="80" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Grid.Column="0"
+                                            Style="{StaticResource ModernSlider}"
+                                            Minimum="0" Maximum="0.5" SmallChange="0.001" LargeChange="0.01"
+                                            Value="{Binding RightStick.Processing.Deadzone}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1"
+                                             Style="{StaticResource NumericTextBox}"
+                                             Text="{Binding RightStick.Processing.Deadzone, Converter={StaticResource FloatStr}, ConverterParameter=F3}"
+                                             TextAlignment="Center" Margin="8,0,0,0" />
+                                </Grid>
+
+                                <!-- Response Curve -->
+                                <TextBlock Text="Response Curve" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                <ComboBox Style="{StaticResource ModernComboBox}"
+                                          SelectedValue="{Binding RightStick.Processing.ResponseCurve}"
+                                          SelectedValuePath="Content">
+                                    <ComboBoxItem Content="Linear" />
+                                    <ComboBoxItem Content="Soft" />
+                                    <ComboBoxItem Content="Aggressive" />
+                                    <ComboBoxItem Content="Fast" />
+                                    <ComboBoxItem Content="Custom" />
+                                </ComboBox>
+
+                                <!-- Speed Multipliers -->
+                                <TextBlock Text="Speed Multiplier" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                        <TextBlock Text="X Speed" Style="{StaticResource LabelStyle}" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="60" />
+                                            </Grid.ColumnDefinitions>
+                                            <Slider Grid.Column="0"
+                                                    Style="{StaticResource ModernSlider}"
+                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
+                                                    Value="{Binding RightStick.Processing.XSpeed}" VerticalAlignment="Center" />
+                                            <TextBox Grid.Column="1"
+                                                     Style="{StaticResource NumericTextBox}"
+                                                     Text="{Binding RightStick.Processing.XSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                     TextAlignment="Center" Margin="4,0,0,0" />
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock Text="Y Speed" Style="{StaticResource LabelStyle}" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="60" />
+                                            </Grid.ColumnDefinitions>
+                                            <Slider Grid.Column="0"
+                                                    Style="{StaticResource ModernSlider}"
+                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
+                                                    Value="{Binding RightStick.Processing.YSpeed}" VerticalAlignment="Center" />
+                                            <TextBox Grid.Column="1"
+                                                     Style="{StaticResource NumericTextBox}"
+                                                     Text="{Binding RightStick.Processing.YSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                     TextAlignment="Center" Margin="4,0,0,0" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Smoothing -->
+                                <TextBlock Text="Smoothing" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                <CheckBox Content="Enable Smoothing (adds latency)"
+                                          Style="{StaticResource ModernCheckBox}"
+                                          IsChecked="{Binding RightStick.Processing.SmoothingEnabled}" Margin="0,0,0,8" />
+                                <Grid IsEnabled="{Binding RightStick.Processing.SmoothingEnabled}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="60" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Grid.Column="0"
+                                            Style="{StaticResource ModernSlider}"
+                                            Minimum="0" Maximum="0.95" SmallChange="0.01" LargeChange="0.1"
+                                            Value="{Binding RightStick.Processing.SmoothingAmount}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1"
+                                             Style="{StaticResource NumericTextBox}"
+                                             Text="{Binding RightStick.Processing.SmoothingAmount, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                             TextAlignment="Center" Margin="8,0,0,0" />
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>
@@ -589,7 +682,7 @@
                                     <Image Source="Resources/BlankRL.ico" Width="34" Height="34"
                                            VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
                                     <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Advanced Controller Processor v1.5.2" FontWeight="SemiBold" FontSize="13.5" />
+                                        <TextBlock Text="Advanced Controller Processor v1.5.3" FontWeight="SemiBold" FontSize="13.5" />
                                         <TextBlock Text="Â© 2026 Blank RL â€” All rights reserved." FontSize="11.5"
                                                    Foreground="{StaticResource AccentHoverBrush}" Margin="0,2,0,0" />
                                     </StackPanel>

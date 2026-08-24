@@ -187,6 +187,7 @@ public sealed class InputProcessingService : IInputProcessingService
         {
             "Soft" => SoftCurve.Instance,
             "Aggressive" => AggressiveCurve.Instance,
+            "Fast" => FastCurve.Instance,
             "Custom" => new CustomCurve(customPoints ?? []),
             _ => LinearCurve.Instance // "Linear" or unknown
         };
