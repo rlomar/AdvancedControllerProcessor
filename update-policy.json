@@ -1,5 +1,5 @@
 {
   "_comment": "Minimum build version allowed to run. The app blocks any build older than max(minimumVersion, latest GitHub release) and forces a self-update. Raise minimumVersion to force-update everyone immediately (e.g. emergency block of a broken release).",
-  "minimumVersion": "1.5.0",
+  "minimumVersion": "1.5.1",
   "message": "This version is outdated and no longer supported. Update to the latest release to continue using the program."
 }
