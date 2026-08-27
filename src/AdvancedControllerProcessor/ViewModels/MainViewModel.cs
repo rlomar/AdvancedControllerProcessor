@@ -25,9 +25,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     private string _statusMessage = "Initializing...";
     private List<string> _availableProfiles = [];
     private VirtualControllerType _virtualType;
-    private int _selectedPollingRate = PollingRate.Default;
-    private int _measuredPollingRate = PollingRate.Default;
-    private int _measuredRawRate;
+    private int _measuredPollingRate = 0;
 
     // License re-validation (mid-session revocation enforcement)
     private readonly LicenseService? _licenseService;
@@ -60,11 +58,6 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _controllerService = new DualSenseControllerService();
         _virtualType = _configService.Settings.VirtualControllerType;
         _virtualService = CreateVirtualService(_virtualType);
-
-        // Restore saved polling rate before the input loop starts
-        _selectedPollingRate = PollingRate.Clamp(_configService.Settings.PollingRateHz);
-        _measuredPollingRate = _selectedPollingRate;
-        _controllerService.PollingRateHz = _selectedPollingRate;
 
         // Initialize child ViewModels
         Controller = new ControllerViewModel();
@@ -191,29 +184,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         _ => new VirtualXboxControllerService()
     };
 
-    // ── Polling Rate ──────────────────────────────────────
-
-    /// <summary>Preset rates offered in the UI.</summary>
-    public int[] PollingRateOptions => PollingRate.Presets;
-
-    /// <summary>
-    /// Target virtual-pad submission rate in Hz. Applied live and saved immediately.
-    /// </summary>
-    public int SelectedPollingRate
-    {
-        get => _selectedPollingRate;
-        set
-        {
-            int clamped = PollingRate.Clamp(value);
-            if (!SetProperty(ref _selectedPollingRate, clamped))
-                return;
-
-            _controllerService.PollingRateHz = clamped;
-            _configService.Update(s => s.PollingRateHz = clamped);
-            OnPropertyChanged(nameof(PollingRateStatus));
-            StatusMessage = $"Virtual pad rate: {clamped} Hz";
-        }
-    }
+    // ── Input Rate (observed) ─────────────────────────────
 
     /// <summary>Measured virtual-pad update rate, reported ~2x/second.</summary>
     public int MeasuredPollingRate
@@ -223,50 +194,10 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         {
             if (SetProperty(ref _measuredPollingRate, value))
                 OnPropertyChanged(nameof(MeasuredRateText));
-            OnPropertyChanged(nameof(PollingRateStatus));
-            OnPropertyChanged(nameof(RateHint));
         }
     }
 
     public string MeasuredRateText => $"{MeasuredPollingRate} Hz";
-
-    /// <summary>Raw hardware HID report rate (DualSense USB native ≈ 250 Hz).</summary>
-    public int MeasuredRawRate
-    {
-        get => _measuredRawRate;
-        private set
-        {
-            if (SetProperty(ref _measuredRawRate, value))
-                OnPropertyChanged(nameof(HardwareRateText));
-            OnPropertyChanged(nameof(PollingRateStatus));
-            OnPropertyChanged(nameof(RateHint));
-        }
-    }
-
-    public string HardwareRateText => MeasuredRawRate > 0
-        ? $"{MeasuredRawRate} Hz"
-        : "—";
-
-    public string PollingRateStatus => $"Target: {SelectedPollingRate} Hz · Pad: {MeasuredPollingRate} Hz · Hardware: {HardwareRateText}";
-
-    /// <summary>
-    /// Explains any gap between target and achievable rate. The DualSense sends
-    /// ~250 reports/sec over USB natively; higher targets engage automatically
-    /// when the host USB polling interval is overclocked (e.g. hidusbf).
-    /// </summary>
-    public string RateHint
-    {
-        get
-        {
-            if (MeasuredRawRate == 0)
-                return string.Empty;
-
-            if (MeasuredRawRate + 5 < SelectedPollingRate)
-                return $"DualSense hardware sends ~{MeasuredRawRate} reports/sec — every one reaches the pad at full speed. " +
-                       $"Higher target engages automatically if the USB interval is overclocked (hidusbf).";
-            return "Running event-driven at full hardware speed.";
-        }
-    }
 
     private void OnMeasuredRateChanged(int hz)
     {
@@ -497,17 +428,30 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
             as System.Windows.Media.Brush
         ?? System.Windows.Media.Brushes.Gray;
 
-    public string PipelineAvgText { get; private set; } = "—";
-    public string PipelineMaxText { get; private set; } = "—";
-    public string PipelineP95Text { get; private set; } = "— ";
-    public string WaitAvgText { get; private set; } = "—";
-    public string WaitMaxText { get; private set; } = "—";
-    public string WaitP95Text { get; private set; } = "— ";
-    public string WaitModeText { get; private set; } = string.Empty;
-    public string LatencyHealthText { get; private set; } = "idle";
+    private string _pipelineAvgText = "—";
+    private string _pipelineMaxText = "—";
+    private string _pipelineP95Text = "— ";
+    private string _waitAvgText = "—";
+    private string _waitMaxText = "—";
+    private string _waitP95Text = "— ";
+    private string _waitModeText = string.Empty;
+    private string _latencyHealthText = "idle";
+    private System.Windows.Media.Brush _latencyHealthBrush = System.Windows.Media.Brushes.Gray;
 
-    public System.Windows.Media.Brush LatencyHealthBrush { get; private set; } =
-        System.Windows.Media.Brushes.Gray;
+    public string PipelineAvgText { get => _pipelineAvgText; private set => SetProperty(ref _pipelineAvgText, value); }
+    public string PipelineMaxText { get => _pipelineMaxText; private set => SetProperty(ref _pipelineMaxText, value); }
+    public string PipelineP95Text { get => _pipelineP95Text; private set => SetProperty(ref _pipelineP95Text, value); }
+    public string WaitAvgText { get => _waitAvgText; private set => SetProperty(ref _waitAvgText, value); }
+    public string WaitMaxText { get => _waitMaxText; private set => SetProperty(ref _waitMaxText, value); }
+    public string WaitP95Text { get => _waitP95Text; private set => SetProperty(ref _waitP95Text, value); }
+    public string WaitModeText { get => _waitModeText; private set => SetProperty(ref _waitModeText, value); }
+    public string LatencyHealthText { get => _latencyHealthText; private set => SetProperty(ref _latencyHealthText, value); }
+
+    public System.Windows.Media.Brush LatencyHealthBrush
+    {
+        get => _latencyHealthBrush;
+        private set => SetProperty(ref _latencyHealthBrush, value);
+    }
 
     // ── Event Handlers ────────────────────────────────────
 

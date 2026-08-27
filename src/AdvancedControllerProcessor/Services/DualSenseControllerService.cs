@@ -79,7 +79,6 @@ public sealed class DualSenseControllerService : IControllerService
     private CancellationTokenSource? _cts;
     private Thread? _inputThread;
     private bool _isConnected;
-    private int _pollingRateHz = PollingRate.Default;
 
     public event Action<ControllerState>? StateChanged;
     public event Action<bool>? ConnectionChanged;
@@ -87,17 +86,6 @@ public sealed class DualSenseControllerService : IControllerService
 
     public bool IsConnected => _isConnected;
     public ConnectionType ConnectionType { get; private set; }
-
-    /// <summary>
-    /// Target submission rate to the virtual pad in Hz. Applied live.
-    /// Raw HID reads always run at native hardware speed; this only gates
-    /// how often parsed states are handed to StateChanged.
-    /// </summary>
-    public int PollingRateHz
-    {
-        get => Volatile.Read(ref _pollingRateHz);
-        set => Volatile.Write(ref _pollingRateHz, PollingRate.Clamp(value));
-    }
 
     /// <summary>
     /// Find the first connected DualSense controller.
@@ -152,8 +140,8 @@ public sealed class DualSenseControllerService : IControllerService
     /// <summary>
     /// Start the input polling loop on a dedicated background thread.
     /// No Thread.Sleep — uses blocking HID read which wakes immediately on new data.
-    /// States are submitted to StateChanged at the configured PollingRateHz;
-    /// the freshest report is always the one submitted (no stale data).
+    /// Every hardware report is parsed and delivered immediately (event-driven);
+    /// the virtual pad always receives the freshest state.
     /// </summary>
     public void Start()
     {
@@ -189,11 +177,9 @@ public sealed class DualSenseControllerService : IControllerService
         var buffer = new byte[BluetoothReportSize]; // max size
         var sw = Stopwatch.StartNew();
 
-        // Submission pacing state (ticks from sw)
-        long lastSubmitTicks = 0;
+        // Measured-rate reporting state (ticks from sw)
         long windowStartTicks = sw.Elapsed.Ticks;
         int submittedInWindow = 0;
-        bool firstReport = true;
 
         while (!token.IsCancellationRequested)
         {
@@ -229,23 +215,20 @@ public sealed class DualSenseControllerService : IControllerService
                     continue;
 
                 ConnectionType connType = DetectConnectionType(bytesRead);
+                if (connType == ConnectionType.Unknown)
+                {
+                    // Unrecognized report shape (vendor-specific/capability frames):
+                    // parsing it with USB offsets would misread bytes every report.
+                    continue;
+                }
                 ControllerState state = ParseReport(buffer, bytesRead, connType);
 
                 long nowTicks = sw.Elapsed.Ticks;
 
-                if (firstReport)
-                {
-                    firstReport = false;
-                    lastSubmitTicks = nowTicks;
-                    StateChanged?.Invoke(state);
-                    submittedInWindow++;
-                }
-                else if (ShouldSubmit(ref lastSubmitTicks, nowTicks,
-                             TimeSpan.TicksPerSecond / Math.Max(1, PollingRateHz)))
-                {
-                    StateChanged?.Invoke(state);
-                    submittedInWindow++;
-                }
+                // Event-driven: every hardware report reaches the virtual pad
+                // immediately — no rate gating ever drops or delays input.
+                StateChanged?.Invoke(state);
+                submittedInWindow++;
 
                 long windowElapsed = nowTicks - windowStartTicks;
                 if (windowElapsed >= TimeSpan.TicksPerSecond / 2)
@@ -266,33 +249,9 @@ public sealed class DualSenseControllerService : IControllerService
             catch (Exception ex)
             {
                 LogError(ex, "Error in input loop");
-                Thread.Sleep(100);
+                Thread.Sleep(15); // brief backoff; long sleeps stack HID backlog -> stale input bursts
             }
         }
-    }
-
-    /// <summary>
-    /// Rate gate: decides whether a report at <paramref name="nowTicks"/> should be
-    /// submitted given the target period between submissions.
-    /// Drift-free: advances the schedule by whole periods; burst-safe: after a stall
-    /// the schedule never falls more than one period behind real time.
-    /// Pure/static so it can be unit tested without hardware.
-    /// </summary>
-    /// <returns>True when the caller should submit and lastSubmitTicks was updated.</returns>
-    internal static bool ShouldSubmit(ref long lastSubmitTicks, long nowTicks, long periodTicks)
-    {
-        if (periodTicks <= 0)
-        {
-            lastSubmitTicks = nowTicks;
-            return true;
-        }
-
-        long dueTicks = lastSubmitTicks + periodTicks;
-        if (nowTicks < dueTicks)
-            return false;
-
-        lastSubmitTicks = Math.Max(dueTicks, nowTicks - periodTicks);
-        return true;
     }
 
     /// <summary>

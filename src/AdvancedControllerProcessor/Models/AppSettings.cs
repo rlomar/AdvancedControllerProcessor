@@ -58,7 +58,7 @@ public sealed class AppSettings
     /// Raw HID reading always runs at native hardware speed; this gates how
     /// often processed states reach the virtual controller.
     /// </summary>
-    public int PollingRateHz { get; set; } = Services.PollingRate.Default;
+    public int PollingRateHz { get; set; } = 1000;
 
     /// <summary>
     /// Activated license key (normalized form). Empty until the user has

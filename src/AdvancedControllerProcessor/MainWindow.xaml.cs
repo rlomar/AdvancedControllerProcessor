@@ -38,12 +38,49 @@ public partial class MainWindow : Window
         if (e.OriginalSource is not DependencyObject source)
             return;
 
-        var viewer = FindAncestor<ScrollViewer>(source);
+        var viewer = FindAncestor<ScrollViewer>(source) ?? FindActiveScrollViewer();
         if (viewer is null || viewer.ScrollableHeight <= 0)
             return;
 
         viewer.ScrollToVerticalOffset(viewer.VerticalOffset - e.Delta / 3.0);
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// Fallback for when the cursor is over an area without its own
+    /// ScrollViewer (tab header, status bar, card edges): scroll the tab that
+    /// currently has the most scrollable content (the active one).
+    /// </summary>
+    private ScrollViewer? FindActiveScrollViewer()
+    {
+        ScrollViewer? best = null;
+        double bestHeight = 0;
+        foreach (var candidate in FindDescendants<ScrollViewer>(ScrollingTabHost))
+        {
+            if (candidate.ScrollableHeight <= 0 || candidate.ScrollableHeight <= bestHeight)
+                continue;
+            best = candidate;
+            bestHeight = candidate.ScrollableHeight;
+        }
+        return best;
+    }
+
+    private static IEnumerable<T> FindDescendants<T>(DependencyObject root) where T : DependencyObject
+    {
+        var queue = new Queue<DependencyObject>();
+        queue.Enqueue(root);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(current);
+            for (int i = 0; i < count; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(current, i);
+                if (child is T match)
+                    yield return match;
+                queue.Enqueue(child);
+            }
+        }
     }
 
     private static T? FindAncestor<T>(DependencyObject start) where T : DependencyObject
@@ -53,8 +90,22 @@ public partial class MainWindow : Window
         {
             if (current is T match)
                 return match;
-            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            current = GetVisualParent(current);
         }
+        return null;
+    }
+
+    /// <summary>
+    /// Walk the visual/logical parent chain safely. ContentElements (e.g. the
+    /// Run inside a TextBlock) are not Visuals, and VisualTreeHelper.GetParent
+    /// throws on them — that was spamming the log on every wheel tick.
+    /// </summary>
+    private static DependencyObject? GetVisualParent(DependencyObject element)
+    {
+        if (element is System.Windows.Media.Visual or System.Windows.Media.Media3D.Visual3D)
+            return System.Windows.Media.VisualTreeHelper.GetParent(element);
+        if (element is System.Windows.ContentElement contentElement)
+            return System.Windows.ContentOperations.GetParent(contentElement);
         return null;
     }
 
@@ -88,6 +139,17 @@ public partial class MainWindow : Window
             };
             uiTimer.Tick += OnUiTimerTick;
             uiTimer.Start();
+
+            // Periodically re-check for a mandatory update while the app is
+            // open. If the publisher forces a new minimum version mid-session,
+            // this instance shuts down so the next launch runs the mandatory
+            // update gate and the user self-updates before it can run.
+            var forcedUpdateTimer = new System.Windows.Threading.DispatcherTimer
+            {
+                Interval = TimeSpan.FromMinutes(3)
+            };
+            forcedUpdateTimer.Tick += OnForcedUpdateTimerTick;
+            forcedUpdateTimer.Start();
         }
         catch (Exception ex)
         {
@@ -168,6 +230,45 @@ public partial class MainWindow : Window
 
     private UpdateInfo? _pendingUpdate;
     private bool _isUpdating;
+    private bool _checkingForcedUpdate;
+
+    /// <summary>
+    /// Enforce a mandatory update on live sessions. Runs every few minutes on
+    /// the UI thread; shows the blocking update gate when the installed build
+    /// fell below the required minimum, then exits so the forced gate re-runs
+    /// on the next launch until the user updates.
+    /// </summary>
+    private async void OnForcedUpdateTimerTick(object? sender, EventArgs e)
+    {
+        if (_checkingForcedUpdate || _isUpdating)
+            return;
+
+        _checkingForcedUpdate = true;
+        try
+        {
+            RequiredUpdate? required = await UpdateChecker.GetRequiredUpdateAsync();
+            if (required is null)
+                return;
+
+            Logging.Warn(
+                $"Live build is outdated — enforcing update to " +
+                $"v{required.RequiredVersion.ToString(3)}");
+
+            var gate = new MandatoryUpdateWindow(required);
+            gate.ShowDialog();
+
+            Logging.Info("Exiting after live mandatory-update gate");
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            Logging.Warn($"Periodic mandatory-update check failed: {ex.Message}");
+        }
+        finally
+        {
+            _checkingForcedUpdate = false;
+        }
+    }
 
     private async Task CheckForUpdatesAsync()
     {

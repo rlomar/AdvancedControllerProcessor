@@ -49,10 +49,10 @@
             </StackPanel>
         </StackPanel>
 
-        <!-- Tab strip -->
-        <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}"
+<!-- Tab host -->
+        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}"
                 CornerRadius="11" Padding="5" Margin="0,0,0,6">
-            <TabControl Style="{StaticResource ModernTabControl}"
+            <TabControl x:Name="ScrollingTabHost" Style="{StaticResource ModernTabControl}"
                         ItemContainerStyle="{StaticResource ModernTabItem}">
                 <TabItem Header="Dashboard">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
@@ -91,46 +91,20 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Input Rate -->
+<!-- Input Rate -->
                         <Border Style="{StaticResource CardBorder}">
                             <StackPanel>
                                 <TextBlock Text="Input Rate" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0" Margin="0,0,20,0">
-                                        <TextBlock Text="Virtual Pad Update Rate" Style="{StaticResource LabelStyle}" />
-                                        <ComboBox Style="{StaticResource ModernComboBox}" Width="160"
-                                                  ItemsSource="{Binding PollingRateOptions}"
-                                                  SelectedItem="{Binding SelectedPollingRate}"
-                                                  VerticalAlignment="Center" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="Measured Rate (live)" Style="{StaticResource LabelStyle}" />
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding MeasuredRateText}" FontSize="22"
-                                                       FontWeight="SemiBold" Foreground="{StaticResource AccentHoverBrush}" />
-                                            <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="5"
-                                                    Padding="7,2" Margin="10,4,0,0" VerticalAlignment="Top">
-                                                <TextBlock Text="real submissions / sec" FontSize="10.5"
-                                                           Foreground="{StaticResource AccentHoverBrush}" />
-                                            </Border>
-                                            <TextBlock Text="Hardware input:" FontSize="11.5" Margin="16,6,6,0"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Text="{Binding HardwareRateText}" FontSize="15"
-                                                       FontWeight="SemiBold" Margin="0,5,0,0"
-                                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                                       VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding PollingRateStatus}" FontSize="11.5"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,3,0,0" />
-                                        <TextBlock Text="{Binding RateHint}" FontSize="11" TextWrapping="Wrap"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
-                                    </StackPanel>
-                                </Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="Measured Rate (live)" Style="{StaticResource LabelStyle}" />
+                                    <TextBlock Text="{Binding MeasuredRateText}" FontSize="22" Margin="14,0,0,0"
+                                               FontWeight="SemiBold" Foreground="{StaticResource AccentHoverBrush}" />
+                                    <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="5"
+                                            Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Bottom">
+                                        <TextBlock Text="real submissions / sec" FontSize="10.5"
+                                                   Foreground="{StaticResource AccentHoverBrush}" />
+                                    </Border>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
@@ -298,7 +272,7 @@
                                 <ComboBox Style="{StaticResource ModernComboBox}"
                                           SelectedValue="{Binding LeftStick.ResponseCurve}"
                                           SelectedValuePath="Content">
-                                    <ComboBoxItem Content="Linear" IsSelected="True" />
+<ComboBoxItem Content="Linear" IsSelected="True" />
                                     <ComboBoxItem Content="Soft" />
                                     <ComboBoxItem Content="Aggressive" />
                                     <ComboBoxItem Content="Custom" />
@@ -430,7 +404,7 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Smoothing -->
+<!-- Smoothing -->
                                 <TextBlock Text="Smoothing" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
                                 <CheckBox Content="Enable Smoothing (adds latency)"
                                           Style="{StaticResource ModernCheckBox}"
@@ -497,7 +471,7 @@
                                 <ComboBox Style="{StaticResource ModernComboBox}"
                                                 SelectedValue="{Binding RightStick.Processing.ResponseCurve}"
                                           SelectedValuePath="Content">
-                                    <ComboBoxItem Content="Linear" />
+<ComboBoxItem Content="Linear" />
                                     <ComboBoxItem Content="Soft" />
                                     <ComboBoxItem Content="Aggressive" />
                                     <ComboBoxItem Content="Custom" />
