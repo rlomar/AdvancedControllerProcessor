@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/rlomar/AdvancedControllerProcessor/releases/latest/download/AdvancedControllerProcessor.exe">
-    <img src="https://img.shields.io/badge/%E2%AC%87_DOWNLOAD_LATEST-v1.0.0-8B5CF6?style=for-the-badge&labelColor=171C28" alt="Download Latest" />
+    <img src="https://img.shields.io/badge/%E2%AC%87_DOWNLOAD_LATEST-v1.6.1-8B5CF6?style=for-the-badge&labelColor=171C28" alt="Download Latest" />
   </a>
 </p>
 
