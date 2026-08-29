@@ -53,6 +53,13 @@ public static class InputThreadOptimizer
         try
         {
             _ = SetThreadAffinityMask(GetCurrentThread(), (UIntPtr)_affinityMask);
+
+            // Soft preference hint for the fastest core (lowest set bit in the
+            // mask) — unlike the mask it does not restrict scheduling, it just
+            // biases the OS start location, which also survives a core list
+            // that is larger than one group's 64 processors.
+            int ideal = System.Numerics.BitOperations.TrailingZeroCount((ulong)_affinityMask);
+            _ = SetThreadIdealProcessor(GetCurrentThread(), (uint)ideal);
         }
         catch (Exception ex)
         {
@@ -202,6 +209,9 @@ public static class InputThreadOptimizer
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern UIntPtr SetThreadAffinityMask(nint hThread, UIntPtr dwThreadAffinityMask);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint SetThreadIdealProcessor(nint hThread, uint dwIdealProcessor);
 
     [DllImport("avrt.dll", SetLastError = true)]
     private static extern IntPtr AvSetMmThreadCharacteristics(

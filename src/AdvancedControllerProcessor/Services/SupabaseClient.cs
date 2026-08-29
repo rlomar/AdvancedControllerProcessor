@@ -83,7 +83,7 @@ public sealed class SupabaseClient
     private static HttpClient CreateClient()
     {
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("AdvancedControllerProcessor/1.5");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("AdvancedControllerProcessor/1.6.4");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         return client;
     }

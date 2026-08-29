@@ -61,6 +61,21 @@ public sealed class AppSettings
     public int PollingRateHz { get; set; } = 1000;
 
     /// <summary>
+    /// Switch the active Windows power plan to "High performance" while the
+    /// app runs so the CPU keeps full turbo clocks during a session.
+    /// Requires administrator rights (skipped with a warning otherwise).
+    /// The original plan is restored on exit. Off by default.
+    /// </summary>
+    public bool EnableHighPerformancePowerPlan { get; set; }
+
+    /// <summary>
+    /// Raise the global Windows timer resolution to 1 ms while the app runs
+    /// (timeBeginPeriod) to reduce input-scheduling jitter.
+    /// Restored on exit. Off by default.
+    /// </summary>
+    public bool EnableHighResolutionTimer { get; set; }
+
+    /// <summary>
     /// Activated license key (normalized form). Empty until the user has
     /// activated. Only the key is stored — validation always happens online.
     /// </summary>

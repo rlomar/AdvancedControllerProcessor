@@ -134,6 +134,48 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         set => SetProperty(ref _isSafeMode, value);
     }
 
+    // ── Performance (opt-in system boosts) ────────────────
+
+    /// <summary>
+    /// Opt-in: switch Windows to the High performance power plan while the
+    /// app runs. The original plan is restored on exit.
+    /// </summary>
+    public bool EnableHighPerformancePowerPlan
+    {
+        get => _configService.Settings.EnableHighPerformancePowerPlan;
+        set
+        {
+            _configService.Update(s => s.EnableHighPerformancePowerPlan = value);
+            OnPropertyChanged(nameof(EnableHighPerformancePowerPlan));
+
+            SystemPerformanceBoost.Apply(_configService.Settings);
+            StatusMessage = value
+                ? "High performance power plan active (original restored on exit)."
+                : "Default Windows power plan restored.";
+            Logging.Info($"[Perf] High performance power plan set to {value}");
+        }
+    }
+
+    /// <summary>
+    /// Opt-in: force 1 ms global timer resolution while the app runs.
+    /// Restored on exit.
+    /// </summary>
+    public bool EnableHighResolutionTimer
+    {
+        get => _configService.Settings.EnableHighResolutionTimer;
+        set
+        {
+            _configService.Update(s => s.EnableHighResolutionTimer = value);
+            OnPropertyChanged(nameof(EnableHighResolutionTimer));
+
+            SystemPerformanceBoost.Apply(_configService.Settings);
+            StatusMessage = value
+                ? "1 ms timer resolution active (restored on exit)."
+                : "Timer resolution restored to Windows default.";
+            Logging.Info($"[Perf] 1 ms timer resolution set to {value}");
+        }
+    }
+
     // ── Virtual Controller Type ───────────────────────────
 
     /// <summary>Display name of the currently selected virtual controller type.</summary>

@@ -100,6 +100,7 @@ public partial class App : Application
         // every startup. Transient network failures get a grace window of
         // retries; definitive failures (revoked / wrong device) block at once.
         var configService = new Services.ConfigurationService(AppDomain.CurrentDomain.BaseDirectory);
+        SystemPerformanceBoost.Apply(configService.Settings);
         var licenseService = new Services.LicenseService(configService);
         CurrentLicenseService = licenseService;
 
@@ -156,6 +157,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        SystemPerformanceBoost.Restore();
         Logging.Info("Application shutting down");
         Logging.Dispose();
         base.OnExit(e);
