@@ -36,6 +36,12 @@ public sealed class VirtualDualShock4Service : IVirtualControllerService
     private IDualShock4Controller? _target;
     private bool _isActive;
 
+    // Change-gating state: identical to VirtualXboxControllerService. The
+    // DualSense streams reports up to ~1000 Hz even at rest, so an unchanged
+    // frame skips the ViGEmBus submission entirely. Cleared on create/remove.
+    private VirtualReportSignature.Key _lastReportKey;
+    private bool _hasSentReport;
+
     public event Action? ControllerCreated;
     public event Action? ControllerRemoved;
 
@@ -58,6 +64,7 @@ public sealed class VirtualDualShock4Service : IVirtualControllerService
                 _target.ResetReport();
 
                 _isActive = true;
+                _hasSentReport = false;
                 ControllerCreated?.Invoke();
                 Logging.Info("[Virtual] DualShock 4 virtual controller created (batch mode)");
                 return true;
@@ -89,6 +96,7 @@ public sealed class VirtualDualShock4Service : IVirtualControllerService
                 if (_isActive)
                 {
                     _isActive = false;
+                    _hasSentReport = false;
                     ControllerRemoved?.Invoke();
                     Logging.Info("[Virtual] DualShock 4 virtual controller removed");
                 }
@@ -112,6 +120,14 @@ public sealed class VirtualDualShock4Service : IVirtualControllerService
             var target = _target;
             if (target is null || !_isActive || _client is null)
                 return;
+
+            // Change-gating: identical frames skip the ViGEmBus submission
+            // entirely — an idle/static pad no longer floods the bus at the
+            // full hardware report rate.
+            var key = VirtualReportSignature.DualShock4(state);
+            if (_hasSentReport && key == _lastReportKey)
+                return;
+            _lastReportKey = key;
 
             try
             {
@@ -157,6 +173,7 @@ public sealed class VirtualDualShock4Service : IVirtualControllerService
                 // Single bus submission for the whole frame (~25x fewer ioctls
                 // than per-property auto-submit — removes the DS4 input delay).
                 target.SubmitReport();
+                _hasSentReport = true;
             }
             catch (ObjectDisposedException)
             {

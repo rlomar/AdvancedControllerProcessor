@@ -40,6 +40,13 @@ public sealed class VirtualXboxControllerService : IVirtualControllerService
     private IXbox360Controller? _target;
     private bool _isActive;
 
+    // Change-gating state: the DualSense streams reports up to ~1000 Hz even
+    // at rest, so an identical frame no longer wastes a full ViGEmBus
+    // submission. Cleared on create/remove so a fresh target always gets the
+    // first frame.
+    private VirtualReportSignature.Key _lastReportKey;
+    private bool _hasSentReport;
+
     public event Action? ControllerCreated;
     public event Action? ControllerRemoved;
 
@@ -63,6 +70,7 @@ public sealed class VirtualXboxControllerService : IVirtualControllerService
                 _target.ResetReport();
 
                 _isActive = true;
+                _hasSentReport = false;
                 ControllerCreated?.Invoke();
                 Logging.Info("[Virtual] Xbox 360 virtual controller created (batch mode)");
                 return true;
@@ -95,6 +103,7 @@ public sealed class VirtualXboxControllerService : IVirtualControllerService
                 if (_isActive)
                 {
                     _isActive = false;
+                    _hasSentReport = false;
                     ControllerRemoved?.Invoke();
                     Logging.Info("[Virtual] Virtual controller removed");
                 }
@@ -118,6 +127,15 @@ public sealed class VirtualXboxControllerService : IVirtualControllerService
             var target = _target;
             if (target is null || !_isActive)
                 return;
+
+            // Change-gating: skip the reset/set/submit entirely when this
+            // frame is identical to the last delivered one. An idle or
+            // held-still pad no longer floods ViGEmBus at the full hardware
+            // rate (~250-1000 Hz), cutting CPU and driver load during play.
+            var key = VirtualReportSignature.Xbox360(state);
+            if (_hasSentReport && key == _lastReportKey)
+                return;
+            _lastReportKey = key;
 
             try
             {
@@ -175,6 +193,7 @@ public sealed class VirtualXboxControllerService : IVirtualControllerService
                 // Single bus submission for the whole frame (~25x fewer ioctls
                 // than per-property auto-submit — removes the input delay).
                 target.SubmitReport();
+                _hasSentReport = true;
             }
             catch (ObjectDisposedException)
             {
