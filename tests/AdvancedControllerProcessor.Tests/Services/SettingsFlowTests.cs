@@ -259,4 +259,66 @@ public class SettingsFlowTests
         var first = svc.Process(raw);
         Assert.NotEqual(GamepadButton.None, first.Buttons & GamepadButton.A);
     }
+
+    [Fact]
+    public void Turbo_Trigger_OscillatesWhileUnturboedTriggerStaysHeld()
+    {
+        var profile = Profile.Default();
+        profile.Turbo = new ButtonTurboSettings { TurboEnabled = true, TurboIntervalMs = 50, TurboL2 = true };
+
+        var svc = new InputProcessingService { ProcessingEnabled = true, CurrentProfile = profile };
+
+        // Hold turbo'd L2 fully AND unturbo'd R2 fully.
+        var raw = new ControllerState { L2 = 1f, R2 = 1f };
+        var r2GotPulled = false;
+
+        int pressedCount = 0;
+        int releasedCount = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            var state = svc.Process(raw);
+
+            // R2 is not turbo-assigned and must never drop to 0.
+            if (state.R2 <= 0f)
+                r2GotPulled = true;
+
+            if (state.L2 > 0f)
+                pressedCount++;
+            else
+                releasedCount++;
+
+            // 10 Hz → 50 ms half period. Sleep generously past it to force flips.
+            System.Threading.Thread.Sleep(60);
+        }
+
+        Assert.False(r2GotPulled, "Unturboed R2 dropped — pass-through violated");
+        Assert.True(pressedCount >= 4, $"L2 pressed too little: {pressedCount} inputs");
+        Assert.True(releasedCount >= 2, $"L2 never released (trigger turbo not oscillating): {releasedCount}");
+
+        // Releasing the trigger disarms turbo; release to 0 only comes from the trigger.
+        Assert.Equal(0f, svc.Process(new ControllerState { R2 = 1f }).L2);
+    }
+
+    [Fact]
+    public void Turbo_Triggers_RoundTripThroughViewModel()
+    {
+        var vm = new TurboSettingsViewModel { TurboL2 = true, TurboR2 = true, TurboLB = true };
+        Assert.True(vm.AnyTurboAssigned);
+
+        var settings = vm.ToSettings();
+        Assert.True(settings.TurboL2);
+        Assert.True(settings.TurboR2);
+        Assert.True(settings.TurboLB);
+        Assert.True(settings.IsTriggerTurbo(0));
+        Assert.True(settings.IsTriggerTurbo(1));
+        Assert.False(settings.IsTriggerTurbo(2));
+
+        var restored = new TurboSettingsViewModel();
+        restored.LoadFrom(settings);
+        Assert.True(restored.TurboL2);
+        Assert.True(restored.TurboR2);
+        Assert.True(restored.TurboLB);
+
+        Assert.False(new TurboSettingsViewModel().AnyTurboAssigned);
+    }
 }

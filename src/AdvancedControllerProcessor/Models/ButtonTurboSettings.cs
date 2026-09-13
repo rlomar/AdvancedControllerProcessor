@@ -3,12 +3,15 @@ using AdvancedControllerProcessor.Models;
 namespace AdvancedControllerProcessor.Models;
 
 /// <summary>
-/// Rapid-fire (turbo) configuration for face and shoulder buttons.
+/// Rapid-fire (turbo) configuration for face and shoulder buttons plus the
+/// L2/R2 analog triggers.
 ///
 /// This is real pipeline functionality: when enabled and processing is ON,
-/// each held turbo button is re-pressed at the configured rate at the virtual
+/// each held turbo control is re-pressed at the configured rate at the virtual
 /// controller — a true square-wave oscillator applied in
 /// <see cref="Services.InputProcessingService.Process"/>, not a visual effect.
+/// Buttons toggle their digital bit; L2/R2 toggle their analog value
+/// (held pull ↔ 0).
 /// </summary>
 public sealed class ButtonTurboSettings
 {
@@ -28,8 +31,10 @@ public sealed class ButtonTurboSettings
     public bool TurboY { get; set; }
     public bool TurboLB { get; set; }
     public bool TurboRB { get; set; }
+    public bool TurboL2 { get; set; }
+    public bool TurboR2 { get; set; }
 
-    /// <summary>Whether the given button is assigned to turbo.</summary>
+    /// <summary>Whether the given digital button is assigned to turbo.</summary>
     public bool IsButtonTurbo(GamepadButton button) => button switch
     {
         GamepadButton.A => TurboA,
@@ -40,6 +45,12 @@ public sealed class ButtonTurboSettings
         GamepadButton.RightShoulder => TurboRB,
         _ => false
     };
+
+    /// <summary>
+    /// Whether the given analog trigger (0 = L2, 1 = R2) is assigned to turbo.
+    /// </summary>
+    public bool IsTriggerTurbo(int triggerIndex) =>
+        triggerIndex == 0 ? TurboL2 : triggerIndex == 1 ? TurboR2 : false;
 
     /// <summary>Default configuration: turbo disabled, 8 ms gap (≈125 presses/sec).</summary>
     public static ButtonTurboSettings Default() => new();

@@ -10,8 +10,9 @@ namespace AdvancedControllerProcessor.Services;
 ///
 /// For Left Stick: full pipeline based on ProcessingSettings.
 /// For Right Stick: pass-through by default, optional full pipeline.
-/// Buttons/Triggers/DPad: pass-through, except turbo buttons (see
-/// <see cref="ApplyTurbo"/>), which are oscillated at the configured rate.
+/// Buttons/Triggers/DPad: pass-through, except turbo controls (see
+/// <see cref="ApplyTurbo"/> and <see cref="ProcessTrigger"/>), which are
+/// oscillated at the configured rate.
 ///
 /// Thread-safe: only Process() and ResetSmoothing() access mutable state,
 /// and they are expected to be called from a single input thread.
@@ -31,6 +32,11 @@ public sealed class InputProcessingService : IInputProcessingService
 
     private readonly bool[] _turboPhase = new bool[TurboButtons.Length];
     private readonly long[] _turboLastTick = new long[TurboButtons.Length];
+
+    // Trigger turbo state (index 0 = L2, 1 = R2). Same square-wave oscillator
+    // as the buttons, but flips the analog value (held pull ↔ 0) instead of a bit.
+    private readonly bool[] _triggerPhase = new bool[2];
+    private readonly long[] _triggerLastTick = new long[2];
 
     // Per-stick curve cache. The hot path runs hundreds of times per second;
     // resolving a CustomCurve there would allocate a list-backed object every
@@ -76,13 +82,15 @@ public sealed class InputProcessingService : IInputProcessingService
         var leftStick = ProcessLeftStick(left);
         var rightStick = ProcessRightStick(right);
 
+        var turbo = CurrentProfile.Turbo;
+
         return new ControllerState
         {
             LeftStick = leftStick,
             RightStick = rightStick,
-            L2 = Sanitize01(rawInput.L2),
-            R2 = Sanitize01(rawInput.R2),
-            Buttons = ApplyTurbo(rawInput.Buttons, CurrentProfile.Turbo),
+            L2 = ProcessTrigger(Sanitize01(rawInput.L2), 0, turbo),
+            R2 = ProcessTrigger(Sanitize01(rawInput.R2), 1, turbo),
+            Buttons = ApplyTurbo(rawInput.Buttons, turbo),
             DPad = rawInput.DPad,
             Connection = rawInput.Connection,
             Timestamp = rawInput.Timestamp
@@ -164,6 +172,55 @@ public sealed class InputProcessingService : IInputProcessingService
     }
 
     /// <summary>
+    /// Apply the turbo oscillator to an L2/R2 analog trigger value.
+    /// While an assigned trigger is held (pull &gt; 0), the virtual output toggles
+    /// between the user's real pull and 0 with the same flip interval as the
+    /// buttons. The first pull answers immediately. Mirror-image of the button
+    /// oscillator in <see cref="ApplyTurbo"/>, allocation-free.
+    /// </summary>
+    private float ProcessTrigger(float raw, int index, ButtonTurboSettings? turbo)
+    {
+        if (turbo is null || !turbo.TurboEnabled)
+        {
+            _triggerLastTick[index] = 0;
+            _triggerPhase[index] = false;
+            return raw;
+        }
+
+        long flipMs = Math.Max((long)Math.Clamp(turbo.TurboIntervalMs, 0.01, 500), 1L);
+        long now = Environment.TickCount64;
+
+        if (!turbo.IsTriggerTurbo(index) || raw <= 0f)
+        {
+            // Released or not assigned — reset and pass through unchanged.
+            _triggerLastTick[index] = 0;
+            _triggerPhase[index] = false;
+            return raw;
+        }
+
+        long last = _triggerLastTick[index];
+        if (last == 0) // just pressed — bite immediately with the user's pull
+        {
+            _triggerLastTick[index] = now;
+            _triggerPhase[index] = true;
+            return raw;
+        }
+
+        if (now - last >= flipMs)
+        {
+            if (now < last) // TickCount64 wrapped — resync, keep phase
+                _triggerLastTick[index] = now;
+            else
+            {
+                _triggerLastTick[index] = now;
+                _triggerPhase[index] = !_triggerPhase[index];
+            }
+        }
+
+        return _triggerPhase[index] ? raw : 0f;
+    }
+
+    /// <summary>
     /// Reset smoothing state for both sticks and the turbo oscillators.
     /// Call when switching profiles, entering safe mode, or toggling processing.
     /// </summary>
@@ -174,6 +231,8 @@ public sealed class InputProcessingService : IInputProcessingService
 
         Array.Clear(_turboPhase);
         Array.Clear(_turboLastTick);
+        Array.Clear(_triggerPhase);
+        Array.Clear(_triggerLastTick);
     }
 
     /// <summary>

@@ -21,6 +21,8 @@ public sealed class TurboSettingsViewModel : ViewModelBase
     private bool _turboY;
     private bool _turboLB;
     private bool _turboRB;
+    private bool _turboL2;
+    private bool _turboR2;
 
     /// <summary>
     /// Callback invoked when any turbo setting changes.
@@ -109,7 +111,19 @@ public sealed class TurboSettingsViewModel : ViewModelBase
         set => SetSetting(ref _turboRB, value);
     }
 
-    public bool AnyTurboAssigned => TurboA || TurboB || TurboX || TurboY || TurboLB || TurboRB;
+    public bool TurboL2
+    {
+        get => _turboL2;
+        set => SetSetting(ref _turboL2, value);
+    }
+
+    public bool TurboR2
+    {
+        get => _turboR2;
+        set => SetSetting(ref _turboR2, value);
+    }
+
+    public bool AnyTurboAssigned => TurboA || TurboB || TurboX || TurboY || TurboLB || TurboRB || TurboL2 || TurboR2;
 
     public void LoadFrom(ButtonTurboSettings settings)
     {
@@ -124,6 +138,8 @@ public sealed class TurboSettingsViewModel : ViewModelBase
             TurboY = settings.TurboY;
             TurboLB = settings.TurboLB;
             TurboRB = settings.TurboRB;
+            TurboL2 = settings.TurboL2;
+            TurboR2 = settings.TurboR2;
         }
         finally
         {
@@ -140,6 +156,8 @@ public sealed class TurboSettingsViewModel : ViewModelBase
         TurboX = TurboX,
         TurboY = TurboY,
         TurboLB = TurboLB,
-        TurboRB = TurboRB
+        TurboRB = TurboRB,
+        TurboL2 = TurboL2,
+        TurboR2 = TurboR2
     };
 }

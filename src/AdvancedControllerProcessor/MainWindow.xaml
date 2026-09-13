@@ -453,7 +453,7 @@
                                                             <TextBlock Text="{Binding Turbo.IntervalText}" FontSize="12.5" FontWeight="SemiBold"
                                                                        Foreground="{StaticResource AccentHoverBrush}" />
                                                         </StackPanel>
-                                                        <UniformGrid Columns="6" Margin="0,8,0,0">
+                                                        <UniformGrid Columns="8" Margin="0,8,0,0">
                                                             <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
                                                                 <TextBlock Text="A" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
                                                                            Foreground="{Binding Turbo.TurboA, Converter={StaticResource BoolToStatus}, ConverterParameter=text}"
@@ -475,14 +475,22 @@
                                                                 <TextBlock Text="LB" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
                                                                            Foreground="{Binding Turbo.TurboLB, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
                                                             </Border>
-                                                            <Border Style="{StaticResource StatusChip}">
+                                                            <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
                                                                 <TextBlock Text="RB" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
                                                                            Foreground="{Binding Turbo.TurboRB, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
+                                                                <TextBlock Text="L2" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboL2, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource StatusChip}">
+                                                                <TextBlock Text="R2" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboR2, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
                                                             </Border>
                                                         </UniformGrid>
                                                     </StackPanel>
                                                 </Border>
-                                                <TextBlock Text="Assign turbo to A/B/X/Y punch, jump and shoulder buttons on the Turbo tab. Right stick and triggers stay untouched — camera control in Rocket League is preserved."
+                                                <TextBlock Text="Assign turbo to A/B/X/Y, shoulder (LB/RB) and trigger (L2/R2) buttons on the Turbo tab. The right stick always passes through untouched — camera control in Rocket League is preserved."
                                                            FontSize="11" TextWrapping="Wrap" Margin="0,0,0,12"
                                                            Foreground="{StaticResource TextSecondaryBrush}" />
                                                 <Button Content="Configure Turbo →" Style="{StaticResource PrimaryButton}"
@@ -802,7 +810,7 @@
                                     <Border Style="{StaticResource CardBorder}">
                                         <StackPanel>
                                             <TextBlock Text="Turbo — Rapid-Fire Buttons" Style="{StaticResource SubHeaderText}" Margin="0,0,0,6" />
-                                            <TextBlock Text="Real functionality, not a visual effect. While a turbo button is held, the virtual controller re-presses it at the rate below — exactly like classic rapid-fire controllers. Works only while Processing is ON (F8)."
+                                            <TextBlock Text="Real functionality, not a visual effect. While a turbo control is held, the virtual controller re-presses it at the rate below — exactly like classic rapid-fire controllers. Works only while Processing is ON (F8)."
                                                        TextWrapping="Wrap" FontSize="12" Margin="0,0,0,14"
                                                        Foreground="{StaticResource TextSecondaryBrush}" />
 
@@ -845,6 +853,7 @@
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <Grid.RowDefinitions>
                                                     <RowDefinition />
@@ -860,18 +869,24 @@
                                                 <CheckBox Grid.Column="2" Grid.Row="0" Content="X  (Square)" Margin="0,0,6,10"
                                                           Style="{StaticResource ModernCheckBox}"
                                                           IsChecked="{Binding Turbo.TurboX}" />
-
-                                                <CheckBox Grid.Column="0" Grid.Row="1" Content="Y  (Triangle)" Margin="0,0,6,10"
+                                                <CheckBox Grid.Column="3" Grid.Row="0" Content="Y  (Triangle)" Margin="0,0,6,10"
                                                           Style="{StaticResource ModernCheckBox}"
                                                           IsChecked="{Binding Turbo.TurboY}" />
-                                                <CheckBox Grid.Column="1" Grid.Row="1" Content="LB  (L1)" Margin="0,0,6,10"
+
+                                                <CheckBox Grid.Column="0" Grid.Row="1" Content="LB  (L1)" Margin="0,0,6,10"
                                                           Style="{StaticResource ModernCheckBox}"
                                                           IsChecked="{Binding Turbo.TurboLB}" />
-                                                <CheckBox Grid.Column="2" Grid.Row="1" Content="RB  (R1)" Margin="0,0,6,10"
+                                                <CheckBox Grid.Column="1" Grid.Row="1" Content="RB  (R1)" Margin="0,0,6,10"
                                                           Style="{StaticResource ModernCheckBox}"
                                                           IsChecked="{Binding Turbo.TurboRB}" />
+                                                <CheckBox Grid.Column="2" Grid.Row="1" Content="L2" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboL2}" />
+                                                <CheckBox Grid.Column="3" Grid.Row="1" Content="R2" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboR2}" />
                                             </Grid>
-                                            <TextBlock Text="D-Pad, triggers and analogue sticks are never turbo'd — raw input always reaches the virtual pad for them."
+                                            <TextBlock Text="L2 and R2 are analog: while you hold the trigger, turbo oscillates it between your pull and 0 (released). D-Pad and analogue sticks are never turbo'd — raw input always reaches the virtual pad for them."
                                                        FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"
                                                        Foreground="{StaticResource TextSecondaryBrush}" />
                                         </StackPanel>
