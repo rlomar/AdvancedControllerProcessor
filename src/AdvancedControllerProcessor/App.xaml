@@ -1,27 +1,37 @@
 <Application x:Class="AdvancedControllerProcessor.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:AdvancedControllerProcessor.Converters"
              ShutdownMode="OnLastWindowClose">
     <Application.Resources>
         <ResourceDictionary>
 
-            <!-- ══════════════ MODERN DARK THEME · BLANK RL ══════════════ -->
+            <!-- ══════════════ LUXE DARK THEME · BLANK RL ══════════════ -->
+
+            <!-- Value converters -->
+            <conv:BoolToStatusConverter x:Key="BoolToStatus" />
+            <conv:InverseBoolConverter x:Key="InverseBool" />
+            <conv:FloatToStringConverter x:Key="FloatStr" />
+            <conv:ConnectionTypeConverter x:Key="ConnectionType" />
 
             <!-- Palette -->
-            <Color x:Key="BackgroundColor">#0B0E17</Color>
-            <Color x:Key="SurfaceColor">#12161F</Color>
-            <Color x:Key="SurfaceHoverColor">#1A2130</Color>
-            <Color x:Key="CardColor">#171C28</Color>
-            <Color x:Key="CardElevatedColor">#1C2333</Color>
+            <Color x:Key="BackgroundColor">#05070D</Color>
+            <Color x:Key="SurfaceColor">#0C1120</Color>
+            <Color x:Key="SurfaceHoverColor">#16203A</Color>
+            <Color x:Key="CardColor">#101828</Color>
+            <Color x:Key="CardElevatedColor">#1A2438</Color>
             <Color x:Key="AccentColor">#8B5CF6</Color>
             <Color x:Key="AccentHoverColor">#A78BFA</Color>
-            <Color x:Key="AccentEndColor">#C026D3</Color>
+            <Color x:Key="AccentEndColor">#D946EF</Color>
+            <Color x:Key="CyanColor">#22D3EE</Color>
+            <Color x:Key="RlBlueColor">#00A8FF</Color>
+            <Color x:Key="RlOrangeColor">#FF7A18</Color>
             <Color x:Key="DangerColor">#F43F5E</Color>
-            <Color x:Key="SuccessColor">#10B981</Color>
-            <Color x:Key="WarningColor">#F59E0B</Color>
-            <Color x:Key="TextPrimaryColor">#F1F5F9</Color>
-            <Color x:Key="TextSecondaryColor">#8A94A7</Color>
-            <Color x:Key="BorderColor">#262D3D</Color>
+            <Color x:Key="SuccessColor">#34D399</Color>
+            <Color x:Key="WarningColor">#FBBF24</Color>
+            <Color x:Key="TextPrimaryColor">#F4F6FB</Color>
+            <Color x:Key="TextSecondaryColor">#98A2B8</Color>
+            <Color x:Key="BorderColor">#232C44</Color>
 
             <!-- Brushes -->
             <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
@@ -32,30 +42,79 @@
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
             <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
             <SolidColorBrush x:Key="AccentSoftBrush" Color="#2E8B5CF6" />
+            <SolidColorBrush x:Key="CyanBrush" Color="{StaticResource CyanColor}" />
+            <SolidColorBrush x:Key="RlBlueBrush" Color="{StaticResource RlBlueColor}" />
+            <SolidColorBrush x:Key="RlOrangeBrush" Color="{StaticResource RlOrangeColor}" />
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
             <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
             <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
             <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
             <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
-            <SolidColorBrush x:Key="ScrollThumbBrush" Color="#55628A" />
+            <SolidColorBrush x:Key="ScrollThumbBrush" Color="#4A5678" />
+
+            <!-- Grow / sheen -->
+            <LinearGradientBrush x:Key="BorderGlowBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#3A4A6E" Offset="0" />
+                <GradientStop Color="#232C44" Offset="0.5" />
+                <GradientStop Color="#2E2438" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="HeroShadeBrush" StartPoint="0,0" EndPoint="1,0">
+                <GradientStop Color="#D9050A12" Offset="0" />
+                <GradientStop Color="#66050A12" Offset="0.45" />
+                <GradientStop Color="#00050A12" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="HeroVignetteBrush" StartPoint="0,1" EndPoint="0,0">
+                <GradientStop Color="#B3050A12" Offset="0" />
+                <GradientStop Color="#00050A12" Offset="1" />
+            </LinearGradientBrush>
+            <RadialGradientBrush x:Key="AuroraViolet" Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                <GradientStop Color="#408B5CF6" Offset="0" />
+                <GradientStop Color="#008B5CF6" Offset="1" />
+            </RadialGradientBrush>
+            <RadialGradientBrush x:Key="AuroraCyan" Center="0.5,0.5" GradientOrigin="0.5,0.5" RadiusX="0.5" RadiusY="0.5">
+                <GradientStop Color="#2E22D3EE" Offset="0" />
+                <GradientStop Color="#0022D3EE" Offset="1" />
+            </RadialGradientBrush>
+
+            <!-- Shared effects -->
+            <DropShadowEffect x:Key="CardShadowEffect" BlurRadius="26" ShadowDepth="7" Direction="270" Opacity="0.34" Color="#000000" />
+            <DropShadowEffect x:Key="AccentGlowEffect" BlurRadius="18" ShadowDepth="3" Direction="270" Opacity="0.42" Color="#8B5CF6" />
 
             <!-- Gradients -->
             <LinearGradientBrush x:Key="AccentGradientBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="{StaticResource AccentColor}" Offset="0" />
                 <GradientStop Color="{StaticResource AccentEndColor}" Offset="1" />
             </LinearGradientBrush>
+            <LinearGradientBrush x:Key="AccentTriBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{StaticResource AccentColor}" Offset="0" />
+                <GradientStop Color="{StaticResource AccentEndColor}" Offset="0.55" />
+                <GradientStop Color="{StaticResource CyanColor}" Offset="1" />
+            </LinearGradientBrush>
+            <LinearGradientBrush x:Key="RlGradientBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="{StaticResource RlBlueColor}" Offset="0" />
+                <GradientStop Color="#9B5CF6" Offset="1" />
+            </LinearGradientBrush>
             <LinearGradientBrush x:Key="DangerGradientBrush" StartPoint="0,0" EndPoint="1,1">
                 <GradientStop Color="#F43F5E" Offset="0" />
                 <GradientStop Color="#E11D48" Offset="1" />
             </LinearGradientBrush>
-            <LinearGradientBrush x:Key="SuccessGradientBrush" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#10B981" Offset="0" />
-                <GradientStop Color="#059669" Offset="1" />
-            </LinearGradientBrush>
+<LinearGradientBrush x:Key="SuccessGradientBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#10B981" Offset="0" />
+            <GradientStop Color="#34D399" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="BoostBlueBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#00A8FF" Offset="0" />
+            <GradientStop Color="#22D3EE" Offset="1" />
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="BoostOrangeBrush" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#FF7A18" Offset="0" />
+            <GradientStop Color="#FBBF24" Offset="1" />
+        </LinearGradientBrush>
             <LinearGradientBrush x:Key="TitleGradientBrush" StartPoint="0,0" EndPoint="1,0">
-                <GradientStop Color="#F1F5F9" Offset="0" />
-                <GradientStop Color="#C4B5FD" Offset="1" />
+                <GradientStop Color="#FFFFFF" Offset="0" />
+                <GradientStop Color="#C4B5FD" Offset="0.7" />
+                <GradientStop Color="#67E8F9" Offset="1" />
             </LinearGradientBrush>
 
             <!-- ══════════════ TYPOGRAPHY ══════════════ -->
@@ -64,13 +123,13 @@
             <FontFamily x:Key="MonoFontFamily">Cascadia Mono, Consolas</FontFamily>
 
             <Style x:Key="HeaderText" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="21" />
+                <Setter Property="FontSize" Value="22" />
                 <Setter Property="FontWeight" Value="Bold" />
                 <Setter Property="Foreground" Value="{StaticResource TitleGradientBrush}" />
             </Style>
 
             <Style x:Key="SubHeaderText" TargetType="TextBlock">
-                <Setter Property="FontSize" Value="14.5" />
+                <Setter Property="FontSize" Value="15" />
                 <Setter Property="FontWeight" Value="SemiBold" />
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
             </Style>
@@ -86,25 +145,25 @@
 
             <Style x:Key="CardBorder" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource CardBrush}" />
-                <Setter Property="CornerRadius" Value="14" />
-                <Setter Property="Padding" Value="18" />
-                <Setter Property="Margin" Value="8" />
-                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="CornerRadius" Value="16" />
+                <Setter Property="Padding" Value="20" />
+                <Setter Property="Margin" Value="6" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderGlowBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
-                <Setter Property="Effect">
-                    <Setter.Value>
-                        <DropShadowEffect BlurRadius="22" ShadowDepth="6" Direction="270"
-                                          Opacity="0.32" Color="#000000" />
-                    </Setter.Value>
-                </Setter>
+                <Setter Property="Effect" Value="{StaticResource CardShadowEffect}" />
+            </Style>
+
+            <Style x:Key="CompactCardBorder" TargetType="Border" BasedOn="{StaticResource CardBorder}">
+                <Setter Property="Padding" Value="16" />
+                <Setter Property="CornerRadius" Value="14" />
             </Style>
 
             <!-- Inner surface panel -->
             <Style x:Key="InnerPanel" TargetType="Border">
                 <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-                <Setter Property="CornerRadius" Value="9" />
-                <Setter Property="Padding" Value="12" />
-                <Setter Property="BorderBrush" Value="#1F2736" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="Padding" Value="13" />
+                <Setter Property="BorderBrush" Value="#202A42" />
                 <Setter Property="BorderThickness" Value="1" />
             </Style>
 
@@ -123,7 +182,7 @@
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="border"
                                     Background="{TemplateBinding Background}"
-                                    CornerRadius="9"
+                                    CornerRadius="10"
                                     Padding="{TemplateBinding Padding}">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="16" ShadowDepth="3" Direction="270"
@@ -133,11 +192,11 @@
                             </Border>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="border" Property="Opacity" Value="0.88" />
+                                    <Setter TargetName="border" Property="Opacity" Value="0.9" />
                                     <Setter TargetName="border" Property="Effect">
                                         <Setter.Value>
-                                            <DropShadowEffect BlurRadius="16" ShadowDepth="3" Direction="270"
-                                                              Opacity="0.45" Color="{StaticResource AccentColor}" />
+                                            <DropShadowEffect BlurRadius="20" ShadowDepth="4" Direction="270"
+                                                              Opacity="0.5" Color="{StaticResource AccentColor}" />
                                         </Setter.Value>
                                     </Setter>
                                 </Trigger>
@@ -149,6 +208,16 @@
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <Style x:Key="RlButton" TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                <Setter Property="Background" Value="{StaticResource RlGradientBrush}" />
+                <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform x:Name="RlScale" ScaleX="1" ScaleY="1" />
                     </Setter.Value>
                 </Setter>
             </Style>
@@ -173,9 +242,9 @@
                         <ControlTemplate TargetType="Button">
                             <Border x:Name="border"
                                     Background="{TemplateBinding Background}"
-                                    BorderBrush="{StaticResource BorderBrush}"
+                                    BorderBrush="{StaticResource BorderGlowBrush}"
                                     BorderThickness="1"
-                                    CornerRadius="9"
+                                    CornerRadius="10"
                                     Padding="{TemplateBinding Padding}">
                                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
@@ -185,7 +254,7 @@
                                     <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                                 </Trigger>
                                 <Trigger Property="IsPressed" Value="True">
-                                    <Setter TargetName="border" Property="Opacity" Value="0.7" />
+                                    <Setter TargetName="border" Property="Opacity" Value="0.72" />
                                 </Trigger>
                                 <Trigger Property="IsEnabled" Value="False">
                                     <Setter TargetName="border" Property="Opacity" Value="0.35" />
@@ -194,6 +263,55 @@
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
+            </Style>
+
+            <!-- ══════════════ SIDEBAR NAVIGATION ══════════════ -->
+
+            <Style x:Key="SideNavItem" TargetType="RadioButton">
+                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                <Setter Property="FontSize" Value="12.5" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Cursor" Value="Hand" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RadioButton">
+                            <Border x:Name="Bd" CornerRadius="10" Padding="12,10" Margin="3,2"
+                                    Background="Transparent">
+                                <ContentPresenter VerticalAlignment="Center"
+                                                  ContentSource="Content"
+                                                  RecognizesAccessKey="True"
+                                                  TextElement.Foreground="{TemplateBinding Foreground}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentGradientBrush}" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Setter TargetName="Bd" Property="Effect" Value="{StaticResource AccentGlowEffect}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- ══════════════ STATUS CHIP / MICRO-CARD ══════════════ -->
+
+            <Style x:Key="StatusChip" TargetType="Border">
+                <Setter Property="Background" Value="#141D30" />
+                <Setter Property="CornerRadius" Value="9" />
+                <Setter Property="Padding" Value="10,6" />
+                <Setter Property="BorderBrush" Value="#25304B" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <Style x:Key="MetricValueStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="19" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                <Setter Property="FontFamily" Value="{StaticResource MonoFontFamily}" />
             </Style>
 
             <!-- ══════════════ TOGGLE SWITCH (CheckBox) ══════════════ -->
@@ -223,7 +341,7 @@
                             </StackPanel>
                             <ControlTemplate.Triggers>
                                 <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentGradientBrush}" />
+                                    <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentTriBrush}" />
                                     <Setter TargetName="Thumb" Property="Fill" Value="White" />
                                     <Trigger.EnterActions>
                                         <BeginStoryboard>
@@ -266,7 +384,7 @@
                         <ControlTemplate TargetType="RepeatButton">
                             <Grid Background="Transparent" Height="22">
                                 <Border Height="6" CornerRadius="3" VerticalAlignment="Center"
-                                        Background="{StaticResource AccentGradientBrush}" />
+                                        Background="{StaticResource AccentTriBrush}" />
                             </Grid>
                         </ControlTemplate>
                     </Setter.Value>
@@ -362,7 +480,7 @@
                         <Setter Property="Background" Value="{StaticResource CardElevatedBrush}" />
                     </Trigger>
                     <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="BorderBrush" Value="#37415A" />
+                        <Setter Property="BorderBrush" Value="#35405E" />
                     </Trigger>
                 </Style.Triggers>
             </Style>
@@ -408,8 +526,8 @@
                                     <ToggleButton.Template>
                                         <ControlTemplate TargetType="ToggleButton">
                                             <Border x:Name="Bd" Background="{StaticResource SurfaceBrush}"
-                                                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                                    CornerRadius="9">
+                                                    BorderBrush="{StaticResource BorderGlowBrush}" BorderThickness="1"
+                                                    CornerRadius="10">
                                                 <Path Data="M 0 0 L 4.5 4.5 L 9 0" SnapsToDevicePixels="False"
                                                       HorizontalAlignment="Right" VerticalAlignment="Center"
                                                       Margin="0,1,14,0"
@@ -440,8 +558,8 @@
                                        AllowsTransparency="True" Placement="Bottom"
                                        PopupAnimation="Fade" Focusable="False">
                                     <Border x:Name="DropDownBorder" Background="{StaticResource CardElevatedBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
-                                            CornerRadius="10" Margin="0,6,0,0" Padding="0,4"
+                                            BorderBrush="{StaticResource BorderGlowBrush}" BorderThickness="1"
+                                            CornerRadius="11" Margin="0,6,0,0" Padding="0,4"
                                             MinWidth="{TemplateBinding ActualWidth}"
                                             MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                         <Border.Effect>
@@ -464,12 +582,19 @@
                 </Setter>
             </Style>
 
-            <!-- ══════════════ TABS ══════════════ -->
+            <!-- ══════════════ TABS (content-only; sidebar drives selection) ══════════════ -->
 
             <Style x:Key="ModernTabControl" TargetType="TabControl">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="Padding" Value="0" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="TabControl">
+                            <ContentPresenter ContentSource="SelectedContent" />
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
 
             <Style x:Key="ModernTabItem" TargetType="TabItem">
@@ -498,12 +623,7 @@
                                 <Trigger Property="IsSelected" Value="True">
                                     <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentGradientBrush}" />
                                     <Setter Property="Foreground" Value="White" />
-                                    <Setter TargetName="Bd" Property="Effect">
-                                        <Setter.Value>
-                                            <DropShadowEffect BlurRadius="14" ShadowDepth="3" Direction="270"
-                                                              Opacity="0.4" Color="{StaticResource AccentColor}" />
-                                        </Setter.Value>
-                                    </Setter>
+                                    <Setter TargetName="Bd" Property="Effect" Value="{StaticResource AccentGlowEffect}" />
                                 </Trigger>
                             </ControlTemplate.Triggers>
                         </ControlTemplate>
@@ -566,7 +686,7 @@
             <Style TargetType="ToolTip">
                 <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
                 <Setter Property="Background" Value="{StaticResource CardElevatedBrush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource BorderGlowBrush}" />
                 <Setter Property="FontSize" Value="12" />
                 <Setter Property="Template">
                     <Setter.Value>

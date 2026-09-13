@@ -63,10 +63,12 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         Controller = new ControllerViewModel();
         LeftStick = new LeftStickViewModel();
         RightStick = new RightStickViewModel();
+        Turbo = new TurboSettingsViewModel();
 
         // Wire up auto-sync: when settings change, update the processing pipeline immediately
         LeftStick.OnChanged = OnStickSettingsChanged;
         RightStick.OnChanged = OnStickSettingsChanged;
+        Turbo.OnChanged = OnStickSettingsChanged;
 
         // Wire up events
         _controllerService.StateChanged += OnControllerStateChanged;
@@ -93,6 +95,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public ControllerViewModel Controller { get; }
     public LeftStickViewModel LeftStick { get; }
     public RightStickViewModel RightStick { get; }
+    public TurboSettingsViewModel Turbo { get; }
 
     // ── Profile ───────────────────────────────────────────
 
@@ -268,6 +271,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
         LeftStick.LoadFrom(profile.LeftStick);
         RightStick.LoadFrom(profile.RightStick);
+        Turbo.LoadFrom(profile.Turbo ?? ButtonTurboSettings.Default());
 
         SelectedProfileName = profile.Name;
         IsSafeMode = false;
@@ -278,6 +282,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     {
         _currentProfile.LeftStick = LeftStick.ToSettings();
         _currentProfile.RightStick = RightStick.ToSettings();
+        _currentProfile.Turbo = Turbo.ToSettings();
         _profileService.Save(_currentProfile);
         StatusMessage = $"Profile saved: {_currentProfile.Name}";
     }
@@ -286,6 +291,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     {
         _currentProfile.LeftStick = LeftStick.ToSettings();
         _currentProfile.RightStick = RightStick.ToSettings();
+        _currentProfile.Turbo = Turbo.ToSettings();
         _processingService.CurrentProfile = _currentProfile;
         _processingService.ResetSmoothing();
     }
@@ -298,6 +304,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
 
         LeftStick.LoadFrom(_currentProfile.LeftStick);
         RightStick.LoadFrom(_currentProfile.RightStick);
+        Turbo.LoadFrom(_currentProfile.Turbo ?? ButtonTurboSettings.Default());
 
         IsProcessingEnabled = false;
         IsSafeMode = true;
@@ -307,6 +314,25 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     public void RefreshProfileList()
     {
         AvailableProfiles = _profileService.ListProfiles();
+    }
+
+    /// <summary>
+    /// Apply the Rocket League baseline preset and switch to it instantly:
+    /// 3% radial deadzone, linear curve, no speed boost, right stick
+    /// pass-through (camera untouched), turbo off.
+    /// </summary>
+    public void ApplyRocketLeaguePreset()
+    {
+        var profile = Profile.RocketLeague();
+        _profileService.Save(profile);
+        RefreshProfileList();
+        LoadProfile(profile.Name);
+
+        if (!IsProcessingEnabled)
+            IsProcessingEnabled = true;
+
+        StatusMessage = "Rocket League preset applied — 3% deadzone, linear, turbo off";
+        Logging.Info("[Main] Rocket League preset applied");
     }
 
     // ── Controller Lifecycle ──────────────────────────────
@@ -319,6 +345,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
     {
         _currentProfile.LeftStick = LeftStick.ToSettings();
         _currentProfile.RightStick = RightStick.ToSettings();
+        _currentProfile.Turbo = Turbo.ToSettings();
         _processingService.CurrentProfile = _currentProfile;
     }
 
@@ -604,6 +631,7 @@ public sealed class MainViewModel : ViewModelBase, IDisposable
         {
             _currentProfile.LeftStick = LeftStick.ToSettings();
             _currentProfile.RightStick = RightStick.ToSettings();
+            _currentProfile.Turbo = Turbo.ToSettings();
             _profileService.Save(_currentProfile);
         }
         catch (Exception ex)

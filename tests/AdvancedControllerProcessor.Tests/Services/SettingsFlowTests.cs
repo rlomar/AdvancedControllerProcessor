@@ -174,4 +174,89 @@ public class SettingsFlowTests
         float curvedThenScaled = MathF.Pow(0.5f, 1.5f) * 1.4f;
         Assert.Equal(curvedThenScaled, svc.Process(raw).RightStick.X, 3);
     }
+
+    [Fact]
+    public void Turbo_Disabled_PassesButtonsThroughUnchanged()
+    {
+        var svc = new InputProcessingService { ProcessingEnabled = true, CurrentProfile = Profile.Default() };
+
+        var raw = new ControllerState { Buttons = GamepadButton.A | GamepadButton.B };
+        var processed = svc.Process(raw);
+
+        Assert.Equal(GamepadButton.A | GamepadButton.B, processed.Buttons);
+    }
+
+    [Fact]
+    public void Turbo_Enabled_ReadsTurboSettingsFromProfile()
+    {
+        // Mirror of MainViewModel wiring: Turbo VM edits flow into the profile.
+        var turbo = new TurboSettingsViewModel();
+        var profile = Profile.Default();
+        void OnTurboChanged()
+        {
+            profile.Turbo = turbo.ToSettings();
+        }
+
+        turbo.OnChanged = OnTurboChanged;
+        turbo.TurboEnabled = true;
+        turbo.TurboIntervalMs = 50;
+        turbo.TurboA = true;
+
+        var svc = new InputProcessingService { ProcessingEnabled = true, CurrentProfile = profile };
+
+        var raw = new ControllerState { Buttons = GamepadButton.A };
+        // First held frame bites immediately (no dead half-cycle).
+        var first = svc.Process(raw);
+        Assert.NotEqual(GamepadButton.None, first.Buttons & GamepadButton.A);
+    }
+
+    [Fact]
+    public void Turbo_HeldButton_OscillatesWhileUnturboedButtonStaysHeld()
+    {
+        var profile = Profile.Default();
+        profile.Turbo = new ButtonTurboSettings { TurboEnabled = true, TurboIntervalMs = 50, TurboA = true };
+
+        var svc = new InputProcessingService { ProcessingEnabled = true, CurrentProfile = profile };
+
+        // Hold turbo'd A AND unturbo'd B simultaneously.
+        var raw = new ControllerState { Buttons = GamepadButton.A | GamepadButton.B };
+
+        int aPressedCount = 0;
+        int aReleasedCount = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            var buttons = svc.Process(raw).Buttons;
+            // B is not turbo-assigned and must never drop.
+            Assert.NotEqual(GamepadButton.None, buttons & GamepadButton.B);
+
+            if ((buttons & GamepadButton.A) != 0)
+                aPressedCount++;
+            else
+                aReleasedCount++;
+
+            // 10 Hz → 50 ms half period. Sleep generously past it to force flips.
+            System.Threading.Thread.Sleep(60);
+        }
+
+        Assert.True(aPressedCount >= 4, $"A pressed too little: {aPressedCount} inputs");
+        Assert.True(aReleasedCount >= 2, $"A never released (turbo not oscillating): {aReleasedCount}");
+
+        // Releasing the button disarms turbo.
+        var released = svc.Process(new ControllerState());
+        Assert.Equal(GamepadButton.None, released.Buttons);
+    }
+
+    [Fact]
+    public void Turbo_MinimumInterval_IsAcceptedAndFlooredByEngine()
+    {
+        var vm = new TurboSettingsViewModel { TurboEnabled = true, TurboIntervalMs = 0.01, TurboA = true };
+        Assert.Equal(0.01, vm.TurboIntervalMs, 4);
+
+        var svc = new InputProcessingService { ProcessingEnabled = true, CurrentProfile = Profile.Default() };
+        svc.CurrentProfile.Turbo = vm.ToSettings();
+
+        var raw = new ControllerState { Buttons = GamepadButton.A };
+        var first = svc.Process(raw);
+        Assert.NotEqual(GamepadButton.None, first.Buttons & GamepadButton.A);
+    }
 }

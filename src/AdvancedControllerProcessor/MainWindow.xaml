@@ -4,10 +4,10 @@
         xmlns:ctrl="clr-namespace:AdvancedControllerProcessor.Controls"
         xmlns:conv="clr-namespace:AdvancedControllerProcessor.Converters"
         xmlns:models="clr-namespace:AdvancedControllerProcessor.Models"
-        Title="Advanced Controller Processor â€” Blank RL"
+        Title="Advanced Controller Processor — Blank RL"
         Icon="Resources/BlankRL.ico"
-        Width="900" Height="650"
-        MinWidth="800" MinHeight="550"
+        Width="1120" Height="740"
+        MinWidth="980" MinHeight="620"
         WindowStartupLocation="CenterScreen"
         FontFamily="{StaticResource AppFontFamily}"
         TextOptions.TextFormattingMode="Ideal"
@@ -21,706 +21,1047 @@
         <conv:FloatToStringConverter x:Key="FloatStr" />
     </Window.Resources>
 
-    <Grid Margin="14">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Grid>
+        <!-- ══ Ambient aurora backdrop ══ -->
+        <Canvas IsHitTestVisible="False" Opacity="0.55">
+            <Ellipse Width="520" Height="520" Canvas.Left="-120" Canvas.Top="-180"
+                     Fill="{StaticResource AuroraViolet}">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="GlowViolet" X="0" Y="0" />
+                </Ellipse.RenderTransform>
+            </Ellipse>
+            <Ellipse Width="460" Height="460" Canvas.Right="-110" Canvas.Bottom="-190"
+                     Fill="{StaticResource AuroraCyan}">
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="GlowCyan" X="0" Y="0" />
+                </Ellipse.RenderTransform>
+            </Ellipse>
+        </Canvas>
 
-        <!-- Header / Brand -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="4,2,0,10">
-            <Image Source="Resources/BlankRL.ico" Width="38" Height="38"
-                   VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
-            <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Advanced Controller Processor"
-                               Style="{StaticResource HeaderText}" VerticalAlignment="Center" />
-                    <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="6"
-                            Padding="8,2" Margin="10,0,0,0" VerticalAlignment="Center">
-<TextBlock Text="v1.6.5" FontSize="11" FontWeight="Bold"
-                                   Foreground="{StaticResource AccentHoverBrush}" />
-                    </Border>
-                </StackPanel>
-                <TextBlock Text="by Blank RL Â· DualSense â†’ Virtual Controller Pipeline"
-                           FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"
-                           Margin="1,3,0,0" />
-            </StackPanel>
-        </StackPanel>
+        <Grid Margin="16,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-<!-- Tab host -->
-        <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}"
-                CornerRadius="11" Padding="5" Margin="0,0,0,6">
-            <TabControl x:Name="ScrollingTabHost" Style="{StaticResource ModernTabControl}"
-                        ItemContainerStyle="{StaticResource ModernTabItem}">
-                <TabItem Header="Dashboard">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
-                    <StackPanel>
-                        <!-- Controller Status -->
-                        <Border Style="{StaticResource CardBorder}">
+            <!-- ══ SIDEBAR ══ -->
+            <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}"
+                    BorderBrush="{StaticResource BorderGlowBrush}" BorderThickness="1"
+                    CornerRadius="18" Margin="0,0,12,0" Padding="12,16">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="22" ShadowDepth="6" Direction="270"
+                                      Opacity="0.3" Color="#000000" />
+                </Border.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="6,0,0,16">
+                        <Image Source="Resources/BlankRL.ico" Width="40" Height="40"
+                               VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                        <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="BLANK RL" FontSize="14" FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                            <TextBlock Text="CONTROLLER PROCESSOR" FontSize="9.5" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1">
+                        <RadioButton Style="{StaticResource SideNavItem}" GroupName="SideNav" Checked="OnNavChecked"
+                                     Tag="0" Content="Dashboard" IsChecked="True" />
+                        <RadioButton Style="{StaticResource SideNavItem}" GroupName="SideNav" Checked="OnNavChecked"
+                                     Tag="1" Content="Left Stick" />
+                        <RadioButton Style="{StaticResource SideNavItem}" GroupName="SideNav" Checked="OnNavChecked"
+                                     Tag="2" Content="Right Stick" />
+                        <Border Background="#233755" CornerRadius="10" Margin="6,14,6,8" Padding="12,8">
                             <StackPanel>
-                                <TextBlock Text="Controller Status" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-
-                                <!-- Physical Controller -->
-                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,8">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Controller.PhysicalStatusIcon}"
-                                                   Foreground="{Binding Controller.PhysicalStatusColor}"
-                                                   FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0" />
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Controller.ControllerName}" FontWeight="SemiBold" FontSize="14" />
-                                            <TextBlock Text="{Binding Controller.StatusText}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
-
-                                <!-- Virtual Controller -->
-                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="6" Padding="12">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Controller.VirtualStatusIcon}"
-                                                   Foreground="{Binding Controller.VirtualStatusColor}"
-                                                   FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0" />
-                                        <StackPanel VerticalAlignment="Center">
-                                            <TextBlock Text="Virtual Xbox Controller" FontWeight="SemiBold" FontSize="14" />
-                                            <TextBlock Text="{Binding Controller.VirtualStatusIcon, Converter={StaticResource BoolToStatus}, ConverterParameter=text}"
-                                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Border>
+                                <TextBlock Text="⚡ RAPID-FIRE" FontSize="10" FontWeight="Bold"
+                                           Foreground="{StaticResource CyanBrush}" />
+                                <TextBlock Text="Turbo buttons now live. Hold a turbo button — it re-presses itself as fast as the pad allows (gap down to 0.01 ms), first press instant."
+                                           TextWrapping="Wrap" FontSize="10.5" Margin="0,3,0,0"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
                             </StackPanel>
                         </Border>
+                        <RadioButton Style="{StaticResource SideNavItem}" GroupName="SideNav" Checked="OnNavChecked"
+                                     Tag="3" Content="Turbo" />
+                        <RadioButton Style="{StaticResource SideNavItem}" GroupName="SideNav" Checked="OnNavChecked"
+                                     Tag="4" Content="Profiles" />
+                        <RadioButton Style="{StaticResource SideNavItem}" GroupName="SideNav" Checked="OnNavChecked"
+                                     Tag="5" Content="Advanced" />
+                    </StackPanel>
 
-<!-- Input Rate -->
-                        <Border Style="{StaticResource CardBorder}">
+                    <StackPanel Grid.Row="2" Margin="6,10,6,0">
+                        <Border Style="{StaticResource StatusChip}" Padding="10,8">
                             <StackPanel>
-                                <TextBlock Text="Input Rate" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="Measured Rate (live)" Style="{StaticResource LabelStyle}" />
-                                    <TextBlock Text="{Binding MeasuredRateText}" FontSize="22" Margin="14,0,0,0"
-                                               FontWeight="SemiBold" Foreground="{StaticResource AccentHoverBrush}" />
-                                    <Border Background="{StaticResource AccentSoftBrush}" CornerRadius="5"
-                                            Padding="7,2" Margin="10,0,0,0" VerticalAlignment="Bottom">
-                                        <TextBlock Text="real submissions / sec" FontSize="10.5"
-                                                   Foreground="{StaticResource AccentHoverBrush}" />
-                                    </Border>
-                                </StackPanel>
+                                <TextBlock Text="HOTKEYS" FontSize="9" FontWeight="Bold"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                                <TextBlock Text="F8 — Toggle processing · F9 — Safe mode"
+                                           FontSize="10.5" TextWrapping="Wrap" Margin="0,3,0,0"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
                             </StackPanel>
                         </Border>
+                        <TextBlock Text="v1.6.5  ·  © 2026 Blank RL" FontSize="10"
+                                   HorizontalAlignment="Center" Margin="0,10,0,0"
+                                   Foreground="#5A6578" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                        <!-- Input Latency -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,12">
-                                    <TextBlock Text="Input Latency" Style="{StaticResource SubHeaderText}" />
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Ellipse Width="9" Height="9" VerticalAlignment="Center"
-                                                 Fill="{Binding LatencyHealthBrush}" Margin="0,0,6,0" />
-                                        <TextBlock Text="{Binding LatencyHealthText}" FontSize="12.5"
+            <!-- ══ MAIN COLUMN ══ -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- ══ ROCKET LEAGUE HERO BANNER ══ -->
+                <Border Grid.Row="0" Height="150" CornerRadius="18" ClipToBounds="True"
+                        BorderBrush="{StaticResource BorderGlowBrush}" BorderThickness="1">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="26" ShadowDepth="7" Direction="270"
+                                          Opacity="0.4" Color="#000000" />
+                    </Border.Effect>
+                    <Border.Triggers>
+                        <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                            <BeginStoryboard>
+                                <Storyboard RepeatBehavior="Forever">
+                                    <DoubleAnimation Storyboard.TargetName="ShineShift"
+                                                     Storyboard.TargetProperty="X"
+                                                     From="-320" To="1200" Duration="0:0:8" />
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Border.Triggers>
+                    <Grid>
+                        <Image Source="Resources/RocketLeagueHero.jpg" Stretch="UniformToFill"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                        <Border Background="{StaticResource HeroShadeBrush}" />
+                        <Border Background="{StaticResource HeroVignetteBrush}" />
+
+                        <!-- Moving sheen -->
+                        <Border x:Name="ShineRect" Width="220" Background="White" Opacity="0.07"
+                                HorizontalAlignment="Left" VerticalAlignment="Stretch">
+                            <Border.RenderTransform>
+                                <TranslateTransform x:Name="ShineShift" X="-260" />
+                            </Border.RenderTransform>
+                        </Border>
+
+                        <Grid Margin="24,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="ROCKET LEAGUE READY" FontSize="10.5" FontWeight="Bold"
+                                           Foreground="{StaticResource CyanBrush}" />
+                                <TextBlock Text="Advanced Controller Processor"
+                                           Style="{StaticResource HeaderText}" Margin="0,3,0,0"
+                                           FontSize="24" />
+                                <TextBlock Text="DualSense → virtual Xbox 360 / DualShock 4 pipeline, tuned for high-speed play."
+                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                           Margin="0,2,0,0" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <Border Style="{StaticResource StatusChip}" Margin="0,0,0,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Margin="0,0,8,0"
+                                                 Fill="{Binding Controller.PhysicalStatusColor}" />
+                                        <TextBlock Text="{Binding Controller.ControllerName}" FontSize="11.5"
                                                    FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                        <TextBlock Text=" ·  " FontSize="11.5"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Controller.ConnectionTypeText}" FontSize="11.5"
                                                    Foreground="{StaticResource TextSecondaryBrush}" />
                                     </StackPanel>
-                                </Grid>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                                        <TextBlock Text="PIPELINE (process + submit)" FontSize="10.5" FontWeight="Bold"
-                                                   Foreground="{StaticResource AccentHoverBrush}" Margin="0,0,0,6" />
-                                        <UniformGrid Columns="3">
-                                            <StackPanel>
-                                                <TextBlock Text="avg" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock Text="{Binding PipelineAvgText}" FontSize="15"
-                                                           FontWeight="SemiBold" FontFamily="{StaticResource MonoFontFamily}"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                            <StackPanel>
-                                                <TextBlock Text="max" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock Text="{Binding PipelineMaxText}" FontSize="15"
-                                                           FontWeight="SemiBold" FontFamily="{StaticResource MonoFontFamily}"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                            <StackPanel>
-                                                <TextBlock Text="p95" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock Text="{Binding PipelineP95Text}" FontSize="15"
-                                                           FontWeight="SemiBold" FontFamily="{StaticResource MonoFontFamily}"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                        </UniformGrid>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
-                                        <TextBlock Text="SCHEDULING WAIT" FontSize="10.5" FontWeight="Bold"
-                                                   Foreground="{StaticResource AccentHoverBrush}" Margin="0,0,0,6" />
-                                        <UniformGrid Columns="3">
-                                            <StackPanel>
-                                                <TextBlock Text="avg" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock Text="{Binding WaitAvgText}" FontSize="15"
-                                                           FontWeight="SemiBold" FontFamily="{StaticResource MonoFontFamily}"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                            <StackPanel>
-                                                <TextBlock Text="max" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock Text="{Binding WaitMaxText}" FontSize="15"
-                                                           FontWeight="SemiBold" FontFamily="{StaticResource MonoFontFamily}"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                            <StackPanel>
-                                                <TextBlock Text="p95" Style="{StaticResource LabelStyle}" />
-                                                <TextBlock Text="{Binding WaitP95Text}" FontSize="15"
-                                                           FontWeight="SemiBold" FontFamily="{StaticResource MonoFontFamily}"
-                                                           Foreground="{StaticResource TextPrimaryBrush}" />
-                                            </StackPanel>
-                                        </UniformGrid>
-                                        <TextBlock Text="{Binding WaitModeText}" FontSize="10.5"
-                                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" />
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Live Stick Monitor -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Live Input Monitor" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!-- Left Stick -->
-                                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                                        <TextBlock Text="LEFT STICK" Style="{StaticResource LabelStyle}"
-                                                   HorizontalAlignment="Center" Margin="0,0,0,8" />
-                                        <ctrl:StickVisualizer x:Name="LeftStickVisualizer" Width="180" Height="180"
-                                                              HorizontalAlignment="Center" />
-                                    </StackPanel>
-
-                                    <!-- Right Stick -->
-                                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                                        <TextBlock Text="RIGHT STICK" Style="{StaticResource LabelStyle}"
-                                                   HorizontalAlignment="Center" Margin="0,0,0,8" />
-                                        <ctrl:StickVisualizer x:Name="RightStickVisualizer" Width="180" Height="180"
-                                                              HorizontalAlignment="Center" />
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Processing Status -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Processing Status" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Processing" />
+                                </Border>
+                                <Border Style="{StaticResource StatusChip}" Margin="0,0,0,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Margin="0,0,8,0"
+                                                 Fill="{Binding IsProcessingEnabled, Converter={StaticResource BoolToStatus}, ConverterParameter=color}" />
+                                        <TextBlock Text="Processing: " FontSize="11.5"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
                                         <TextBlock Text="{Binding IsProcessingEnabled, Converter={StaticResource BoolToStatus}, ConverterParameter=text}"
-                                                   Foreground="{Binding IsProcessingEnabled, Converter={StaticResource BoolToStatus}, ConverterParameter=color}"
-                                                   FontSize="16" FontWeight="SemiBold" />
+                                                   FontSize="11.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
                                     </StackPanel>
-                                    <StackPanel Grid.Column="1">
-                                        <TextBlock Style="{StaticResource LabelStyle}" Text="Active Profile" />
-                                        <TextBlock Text="{Binding SelectedProfileName}"
-                                                   FontSize="16" FontWeight="SemiBold" />
+                                </Border>
+                                <Border Style="{StaticResource StatusChip}" Margin="0,0,0,6">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Margin="0,0,8,0" Fill="{StaticResource CyanBrush}" />
+                                        <TextBlock Text="Rate: " FontSize="11.5"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding MeasuredRateText}" FontSize="11.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
                                     </StackPanel>
-                                </Grid>
+                                </Border>
+                                <Border Style="{StaticResource StatusChip}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" Margin="0,0,8,0"
+                                                 Fill="{Binding Turbo.TurboEnabled, Converter={StaticResource BoolToStatus}, ConverterParameter=color}" />
+                                        <TextBlock Text="Turbo: " FontSize="11.5"
+                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                        <TextBlock Text="{Binding Turbo.EnabledText}" FontSize="11.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
+                        </Grid>
+                    </Grid>
+                </Border>
 
-            <!-- â•â•â• LEFT STICK TAB â•â•â• -->
-            <TabItem Header="Left Stick">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
-                    <StackPanel>
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Left Stick Processing" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <ctrl:StickVisualizer x:Name="LeftStickDetailVisualizer" Width="200" Height="200"
-                                                      HorizontalAlignment="Center" Margin="0,0,0,16" />
+                <!-- ══ TAB HOST ══ -->
+                <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderGlowBrush}" BorderThickness="1"
+                        CornerRadius="18" Padding="14" Margin="0,12,0,0">
+                    <TabControl x:Name="ScrollingTabHost" Style="{StaticResource ModernTabControl}"
+                                ItemContainerStyle="{StaticResource ModernTabItem}">
 
-                                <!-- Deadzone -->
-                                <TextBlock Text="Deadzone" Style="{StaticResource LabelStyle}" Margin="0,8,0,4" />
-                                <CheckBox Content="Enable Deadzone"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding LeftStick.DeadzoneEnabled}" Margin="0,0,0,8" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="80" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0"
-                                            Style="{StaticResource ModernSlider}"
-                                            Minimum="0" Maximum="0.5" SmallChange="0.001" LargeChange="0.01"
-                                            Value="{Binding LeftStick.Deadzone}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1"
-                                             Style="{StaticResource NumericTextBox}"
-                                             Text="{Binding LeftStick.Deadzone, Converter={StaticResource FloatStr}, ConverterParameter=F3}"
-                                             TextAlignment="Center" Margin="8,0,0,0" />
-                                </Grid>
+                        <!-- ══════════ DASHBOARD ══════════ -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="2">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                                <TextBlock Text="Response Curve" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
-                                <ComboBox Style="{StaticResource ModernComboBox}"
-                                          SelectedValue="{Binding LeftStick.ResponseCurve}"
-                                          SelectedValuePath="Content">
-<ComboBoxItem Content="Linear" IsSelected="True" />
-                                    <ComboBoxItem Content="Soft" />
-                                    <ComboBoxItem Content="Aggressive" />
-                                    <ComboBoxItem Content="Custom" />
-                                </ComboBox>
+                                        <!-- Controller -->
+                                        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                                            <StackPanel>
+                                                <TextBlock Text="Controller" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                                <Border Style="{StaticResource InnerPanel}" Margin="0,0,0,8">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Controller.PhysicalStatusIcon}"
+                                                                   Foreground="{Binding Controller.PhysicalStatusColor}"
+                                                                   FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding Controller.ControllerName}"
+                                                                       FontWeight="SemiBold" FontSize="14" />
+                                                            <TextBlock Text="{Binding Controller.StatusText}"
+                                                                       Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                                <Border Style="{StaticResource InnerPanel}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Controller.VirtualStatusIcon}"
+                                                                   Foreground="{Binding Controller.VirtualStatusColor}"
+                                                                   FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0" />
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="Virtual Controller" FontWeight="SemiBold" FontSize="14" />
+                                                            <TextBlock Text="{Binding VirtualTypeName}" FontSize="12"
+                                                                       Foreground="{StaticResource AccentHoverBrush}" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </Border>
 
-                                <!-- Speed Multipliers -->
-                                <TextBlock Text="Speed Multiplier" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
+                                        <!-- Processing + Rate -->
+                                        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                                            <StackPanel>
+                                                <TextBlock Text="Processing" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                                <Grid Margin="0,0,0,12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="State" Style="{StaticResource LabelStyle}" />
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Ellipse Width="9" Height="9" Margin="0,0,7,0" VerticalAlignment="Center"
+                                                                     Fill="{Binding IsProcessingEnabled, Converter={StaticResource BoolToStatus}, ConverterParameter=color}" />
+                                                            <TextBlock Text="{Binding IsProcessingEnabled, Converter={StaticResource BoolToStatus}, ConverterParameter=text}"
+                                                                       FontSize="17" FontWeight="SemiBold" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1">
+                                                        <TextBlock Text="Profile" Style="{StaticResource LabelStyle}" />
+                                                        <TextBlock Text="{Binding SelectedProfileName}" FontSize="17" FontWeight="SemiBold" />
+                                                    </StackPanel>
+                                                </Grid>
 
-                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                        <TextBlock Text="X Speed" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="60" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0"
-                                                    Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
-                                                    Value="{Binding LeftStick.XSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1"
-                                                     Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding LeftStick.XSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
+                                                <Border Style="{StaticResource InnerPanel}" Margin="0,0,0,12">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <StackPanel VerticalAlignment="Center">
+                                                            <TextBlock Text="Live Report Rate" Style="{StaticResource LabelStyle}" />
+                                                            <TextBlock Text="real submissions / second" FontSize="10"
+                                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                                        </StackPanel>
+                                                        <TextBlock Text="{Binding MeasuredRateText}"
+                                                                   Style="{StaticResource MetricValueStyle}"
+                                                                   Foreground="{StaticResource AccentHoverBrush}"
+                                                                   HorizontalAlignment="Right" Margin="12,0,0,0" />
+                                                    </StackPanel>
+                                                </Border>
 
-                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                        <TextBlock Text="Y Speed" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="60" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0"
-                                                    Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
-                                                    Value="{Binding LeftStick.YSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1"
-                                                     Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding LeftStick.YSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
-                                </Grid>
+                                                <Button Content="Processing: OFF"
+                                                        Style="{StaticResource PrimaryButton}" Margin="0,0,0,8"
+                                                        Click="OnToggleProcessingClick" />
+                                                <Button Content="Safe Mode (F9)"
+                                                        Style="{StaticResource DangerButton}"
+                                                        Click="OnSafeModeClick" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
 
-                                <!-- Directional Speed -->
-                                <TextBlock Text="Directional Speed" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
-                                <CheckBox Content="Enable Directional Speed"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding LeftStick.DirectionalSpeedEnabled}" Margin="0,0,0,8" />
+                                    <!-- Input Latency + Live Monitor -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                                <Grid IsEnabled="{Binding LeftStick.DirectionalSpeedEnabled}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition />
-                                        <RowDefinition />
-                                    </Grid.RowDefinitions>
+                                        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,12">
+                                                    <TextBlock Text="Input Latency" Style="{StaticResource SubHeaderText}" />
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                                        <Ellipse Width="9" Height="9" VerticalAlignment="Center"
+                                                                 Fill="{Binding LatencyHealthBrush}" Margin="0,0,6,0" />
+                                                        <TextBlock Text="{Binding LatencyHealthText}" FontSize="12.5"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                                <StackPanel Margin="0,0,10,0">
+                                                    <TextBlock Text="PIPELINE (process + submit)" FontSize="10.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource AccentHoverBrush}" Margin="0,0,0,6" />
+                                                    <UniformGrid Columns="3">
+                                                        <StackPanel>
+                                                            <TextBlock Text="avg" Style="{StaticResource LabelStyle}" />
+                                                            <TextBlock Text="{Binding PipelineAvgText}" Style="{StaticResource MetricValueStyle}" FontSize="15" />
+                                                        </StackPanel>
+                                                        <StackPanel>
+                                                            <TextBlock Text="max" Style="{StaticResource LabelStyle}" />
+                                                            <TextBlock Text="{Binding PipelineMaxText}" Style="{StaticResource MetricValueStyle}" FontSize="15" />
+                                                        </StackPanel>
+                                                        <StackPanel>
+                                                            <TextBlock Text="p95" Style="{StaticResource LabelStyle}" />
+                                                            <TextBlock Text="{Binding PipelineP95Text}" Style="{StaticResource MetricValueStyle}" FontSize="15" />
+                                                        </StackPanel>
+                                                    </UniformGrid>
+                                                </StackPanel>
+                                                <StackPanel Margin="0,12,0,0">
+                                                    <TextBlock Text="SCHEDULING WAIT" FontSize="10.5" FontWeight="Bold"
+                                                               Foreground="{StaticResource AccentHoverBrush}" Margin="0,0,0,6" />
+                                                    <UniformGrid Columns="3">
+                                                        <StackPanel>
+                                                            <TextBlock Text="avg" Style="{StaticResource LabelStyle}" />
+                                                            <TextBlock Text="{Binding WaitAvgText}" Style="{StaticResource MetricValueStyle}" FontSize="15" />
+                                                        </StackPanel>
+                                                        <StackPanel>
+                                                            <TextBlock Text="max" Style="{StaticResource LabelStyle}" />
+                                                            <TextBlock Text="{Binding WaitMaxText}" Style="{StaticResource MetricValueStyle}" FontSize="15" />
+                                                        </StackPanel>
+                                                        <StackPanel>
+                                                            <TextBlock Text="p95" Style="{StaticResource LabelStyle}" />
+                                                            <TextBlock Text="{Binding WaitP95Text}" Style="{StaticResource MetricValueStyle}" FontSize="15" />
+                                                        </StackPanel>
+                                                    </UniformGrid>
+                                                    <TextBlock Text="{Binding WaitModeText}" FontSize="10.5"
+                                                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
 
-                                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
-                                        <TextBlock Text="Forward" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="50" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01"
-                                                    Value="{Binding LeftStick.ForwardSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding LeftStick.ForwardSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
+                                        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                                            <StackPanel>
+                                                <TextBlock Text="Live Input Monitor" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                                        <TextBlock Text="LEFT STICK" Style="{StaticResource LabelStyle}"
+                                                                   HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                                        <ctrl:StickVisualizer x:Name="LeftStickVisualizer" Width="150" Height="150"
+                                                                              HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                                        <TextBlock Text="RIGHT STICK" Style="{StaticResource LabelStyle}"
+                                                                   HorizontalAlignment="Center" Margin="0,0,0,8" />
+                                                        <ctrl:StickVisualizer x:Name="RightStickVisualizer" Width="150" Height="150"
+                                                                              HorizontalAlignment="Center" />
+                                                    </StackPanel>
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
 
-                                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
-                                        <TextBlock Text="Backward" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="50" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01"
-                                                    Value="{Binding LeftStick.BackwardSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding LeftStick.BackwardSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
+                                    <!-- Rocket League + Turbo Quick -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,0">
-                                        <TextBlock Text="Left" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="50" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01"
-                                                    Value="{Binding LeftStick.LeftSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding LeftStick.LeftSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
+                                        <Border Grid.Column="0" Style="{StaticResource CardBorder}">
+                                            <StackPanel>
+                                                <Grid Margin="0,0,0,12">
+                                                    <TextBlock Text="Rocket League" Style="{StaticResource SubHeaderText}" />
+                                                    <Border Background="#233755" CornerRadius="6" Padding="8,3"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                        <TextBlock Text="OFFICIAL" FontSize="9.5" FontWeight="Bold"
+                                                                   Foreground="{StaticResource CyanBrush}" />
+                                                    </Border>
+                                                </Grid>
+                                                <Grid Margin="0,0,0,12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Border Grid.Column="0" CornerRadius="10" ClipToBounds="True"
+                                                            Width="104" Height="60">
+                                                        <Image Source="Resources/RocketLeagueCapsule.jpg" Stretch="UniformToFill"
+                                                               RenderOptions.BitmapScalingMode="HighQuality" />
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                        <TextBlock Text="DualSense controller overlay" FontWeight="SemiBold" FontSize="13" />
+                                                        <TextBlock Text="Controller-shaped reference inside this app only — never injected into the game."
+                                                                   FontSize="11" TextWrapping="Wrap" Margin="0,3,0,0"
+                                                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </Grid>
+                                                <Button Content="Apply Rocket League Preset" Style="{StaticResource SecondaryButton}"
+                                                        Margin="0,0,0,8" Click="OnApplyRocketLeaguePresetClick" />
+                                                <Button Content="Configure Turbo..." Style="{StaticResource SecondaryButton}"
+                                                        Click="OnOpenTurboClick" />
+                                            </StackPanel>
+                                        </Border>
 
-                                    <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,0">
-                                        <TextBlock Text="Right" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="50" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01"
-                                                    Value="{Binding LeftStick.RightSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding LeftStick.RightSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
-                                </Grid>
-
-<!-- Smoothing -->
-                                <TextBlock Text="Smoothing" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
-                                <CheckBox Content="Enable Smoothing (adds latency)"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding LeftStick.SmoothingEnabled}" Margin="0,0,0,8" />
-                                <Grid IsEnabled="{Binding LeftStick.SmoothingEnabled}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="60" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0"
-                                            Style="{StaticResource ModernSlider}"
-                                            Minimum="0" Maximum="0.95" SmallChange="0.01" LargeChange="0.1"
-                                            Value="{Binding LeftStick.SmoothingAmount}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1"
-                                             Style="{StaticResource NumericTextBox}"
-                                             Text="{Binding LeftStick.SmoothingAmount, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                             TextAlignment="Center" Margin="8,0,0,0" />
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- â•â•â• RIGHT STICK TAB â•â•â• -->
-            <TabItem Header="Right Stick">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
-                    <StackPanel>
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Right Stick Processing" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <ctrl:StickVisualizer x:Name="RightStickDetailVisualizer" Width="200" Height="200"
-                                                      HorizontalAlignment="Center" Margin="0,0,0,16" />
-
-                                <CheckBox Content="Enable Right Stick Processing"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding RightStick.ProcessingEnabled}" Margin="0,0,0,8" />
-                                <TextBlock Text="When disabled, right stick input passes through unmodified."
-                                           Foreground="{StaticResource TextSecondaryBrush}"
-                                           TextWrapping="Wrap" FontSize="11.5" Margin="0,0,0,10" />
-
-                                <!-- Deadzone -->
-                                <TextBlock Text="Deadzone" Style="{StaticResource LabelStyle}" Margin="0,8,0,4" />
-                                <CheckBox Content="Enable Deadzone"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding RightStick.Processing.DeadzoneEnabled}" Margin="0,0,0,8" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="80" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0"
-                                            Style="{StaticResource ModernSlider}"
-                                            Minimum="0" Maximum="0.5" SmallChange="0.001" LargeChange="0.01"
-                                            Value="{Binding RightStick.Processing.Deadzone}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1"
-                                             Style="{StaticResource NumericTextBox}"
-                                             Text="{Binding RightStick.Processing.Deadzone, Converter={StaticResource FloatStr}, ConverterParameter=F3}"
-                                             TextAlignment="Center" Margin="8,0,0,0" />
-                                </Grid>
-
-                                <!-- Response Curve -->
-                                <TextBlock Text="Response Curve" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
-                                <ComboBox Style="{StaticResource ModernComboBox}"
-                                                SelectedValue="{Binding RightStick.Processing.ResponseCurve}"
-                                          SelectedValuePath="Content">
-<ComboBoxItem Content="Linear" />
-                                    <ComboBoxItem Content="Soft" />
-                                    <ComboBoxItem Content="Aggressive" />
-                                    <ComboBoxItem Content="Custom" />
-                                </ComboBox>
-
-                                <!-- Speed Multipliers -->
-                                <TextBlock Text="Speed Multiplier" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                        <TextBlock Text="X Speed" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="60" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0"
-                                                    Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
-                                                    Value="{Binding RightStick.Processing.XSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1"
-                                                     Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding RightStick.Processing.XSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
-
-                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                        <TextBlock Text="Y Speed" Style="{StaticResource LabelStyle}" />
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="60" />
-                                            </Grid.ColumnDefinitions>
-                                            <Slider Grid.Column="0"
-                                                    Style="{StaticResource ModernSlider}"
-                                                    Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
-                                                    Value="{Binding RightStick.Processing.YSpeed}" VerticalAlignment="Center" />
-                                            <TextBox Grid.Column="1"
-                                                     Style="{StaticResource NumericTextBox}"
-                                                     Text="{Binding RightStick.Processing.YSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                                     TextAlignment="Center" Margin="4,0,0,0" />
-                                        </Grid>
-                                    </StackPanel>
-                                </Grid>
-
-                                <!-- Smoothing -->
-                                <TextBlock Text="Smoothing" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
-                                <CheckBox Content="Enable Smoothing (adds latency)"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding RightStick.Processing.SmoothingEnabled}" Margin="0,0,0,8" />
-                                <Grid IsEnabled="{Binding RightStick.Processing.SmoothingEnabled}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="60" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0"
-                                            Style="{StaticResource ModernSlider}"
-                                            Minimum="0" Maximum="0.95" SmallChange="0.01" LargeChange="0.1"
-                                            Value="{Binding RightStick.Processing.SmoothingAmount}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1"
-                                             Style="{StaticResource NumericTextBox}"
-                                             Text="{Binding RightStick.Processing.SmoothingAmount, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
-                                             TextAlignment="Center" Margin="8,0,0,0" />
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- â•â•â• PROFILES TAB â•â•â• -->
-            <TabItem Header="Profiles">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
-                    <StackPanel>
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Profile Management" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-
-                                <Grid Margin="0,0,0,12">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <ComboBox Grid.Column="0" Style="{StaticResource ModernComboBox}"
-                                              ItemsSource="{Binding AvailableProfiles}"
-                                              SelectedItem="{Binding SelectedProfileName}" />
-                                    <Button Grid.Column="1" Content="Save" Style="{StaticResource SuccessButton}"
-                                            Command="{Binding}" Click="OnSaveProfileClick" Margin="8,0,0,0" />
-                                    <Button Grid.Column="2" Content="Refresh" Style="{StaticResource SecondaryButton}"
-                                            Click="OnRefreshProfilesClick" Margin="8,0,0,0" />
-                                </Grid>
-
-                                <Grid Margin="0,0,0,8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Button Grid.Column="0" Content="Export Profile..." Style="{StaticResource SecondaryButton}"
-                                            Click="OnExportProfileClick" Margin="0,0,4,0" />
-                                    <Button Grid.Column="1" Content="Import Profile..." Style="{StaticResource SecondaryButton}"
-                                            Click="OnImportProfileClick" Margin="4,0,0,0" />
-                                </Grid>
-
-                                <TextBlock Text="Current Profile:" Style="{StaticResource LabelStyle}" Margin="0,8,0,4" />
-                                <TextBlock Text="{Binding SelectedProfileName}" FontSize="16" FontWeight="SemiBold" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-
-            <!-- â•â•â• ADVANCED TAB â•â•â• -->
-            <TabItem Header="Advanced">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4">
-                    <StackPanel>
-                        <!-- Hotkeys -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Hotkeys" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock Text="Toggle Processing" Style="{StaticResource LabelStyle}" />
-                                        <TextBlock Text="F8 â€” Toggle processing ON/OFF" FontSize="13" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" HorizontalAlignment="Right">
-                                        <TextBlock Text="Safe Mode Reset" Style="{StaticResource LabelStyle}" />
-                                        <TextBlock Text="F9 â€” Reset all settings to defaults" FontSize="13" />
-                                    </StackPanel>
-                                </Grid>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Virtual Controller -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Virtual Controller" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <TextBlock Text="Controller type games will see. Xbox 360 works with almost all Windows games (XInput). DualShock 4 only with games supporting DS4/DirectInput natively or via Steam Input."
-                                           Foreground="{StaticResource TextSecondaryBrush}"
-                                           TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8" />
-                                <ComboBox Style="{StaticResource ModernComboBox}" Width="240"
-                                          HorizontalAlignment="Left"
-                                          SelectedValue="{Binding VirtualType}"
-                                          SelectedValuePath="Tag">
-                                    <ComboBoxItem Content="Xbox 360 (XInput)"
-                                                  Tag="{x:Static models:VirtualControllerType.Xbox360}" />
-                                    <ComboBoxItem Content="DualShock 4"
-                                                  Tag="{x:Static models:VirtualControllerType.DualShock4}" />
-                                </ComboBox>
-                            </StackPanel>
-</Border>
-
-                        <!-- Performance (opt-in system boosts) -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Performance (system)" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <CheckBox Content="High-performance power plan while running"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding EnableHighPerformancePowerPlan}" Margin="0,0,0,4" />
-                                <TextBlock Text="Keeps CPU clocks boosted during a session. Needs administrator rights; your original plan is restored on exit."
-                                           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,12" />
-                                <CheckBox Content="Force 1 ms timer resolution"
-                                          Style="{StaticResource ModernCheckBox}"
-                                          IsChecked="{Binding EnableHighResolutionTimer}" Margin="0,0,0,4" />
-                                <TextBlock Text="Reduces input-scheduling jitter (timeBeginPeriod). Restored on exit."
-                                           Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" FontSize="12" />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Safety -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="Safety" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="Reset Profile" Style="{StaticResource DangerButton}"
-                                            Click="OnResetProfileClick" Margin="0,0,8,0" />
-                                    <Button Content="Restore Defaults" Style="{StaticResource DangerButton}"
-                                            Click="OnRestoreDefaultsClick" />
+                                        <Border Grid.Column="1" Style="{StaticResource CardBorder}">
+                                            <StackPanel>
+                                                <TextBlock Text="Turbo — Rapid-Fire" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                                <CheckBox Content="Enable Turbo (real re-press, instant first hit)"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboEnabled}" Margin="0,0,0,12" />
+                                                <Border Style="{StaticResource InnerPanel}" Margin="0,0,0,12">
+                                                    <StackPanel>
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="Gap" Style="{StaticResource LabelStyle}" Margin="0,0,10,0" />
+                                                            <TextBlock Text="{Binding Turbo.IntervalText}" FontSize="12.5" FontWeight="SemiBold"
+                                                                       Foreground="{StaticResource AccentHoverBrush}" />
+                                                        </StackPanel>
+                                                        <UniformGrid Columns="6" Margin="0,8,0,0">
+                                                            <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
+                                                                <TextBlock Text="A" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboA, Converter={StaticResource BoolToStatus}, ConverterParameter=text}"
+                                                                           Background="Transparent" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
+                                                                <TextBlock Text="B" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboB, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
+                                                                <TextBlock Text="X" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboX, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
+                                                                <TextBlock Text="Y" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboY, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource StatusChip}" Margin="0,0,4,0">
+                                                                <TextBlock Text="LB" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboLB, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
+                                                            </Border>
+                                                            <Border Style="{StaticResource StatusChip}">
+                                                                <TextBlock Text="RB" HorizontalAlignment="Center" FontSize="11" FontWeight="Bold"
+                                                                           Foreground="{Binding Turbo.TurboRB, Converter={StaticResource BoolToStatus}, ConverterParameter=text}" />
+                                                            </Border>
+                                                        </UniformGrid>
+                                                    </StackPanel>
+                                                </Border>
+                                                <TextBlock Text="Assign turbo to A/B/X/Y punch, jump and shoulder buttons on the Turbo tab. Right stick and triggers stay untouched — camera control in Rocket League is preserved."
+                                                           FontSize="11" TextWrapping="Wrap" Margin="0,0,0,12"
+                                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                                                <Button Content="Configure Turbo →" Style="{StaticResource PrimaryButton}"
+                                                        Click="OnOpenTurboClick" />
+                                            </StackPanel>
+                                        </Border>
+                                    </Grid>
                                 </StackPanel>
-                            </StackPanel>
-                        </Border>
+                            </ScrollViewer>
+                        </TabItem>
 
-                        <!-- About -->
-                        <Border Style="{StaticResource CardBorder}">
-                            <StackPanel>
-                                <TextBlock Text="About" Style="{StaticResource SubHeaderText}" Margin="0,0,0,8" />
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                    <Image Source="Resources/BlankRL.ico" Width="34" Height="34"
-                                           VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
-                                    <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Advanced Controller Processor v1.6.5" FontWeight="SemiBold" FontSize="13.5" />
-                                        <TextBlock Text="Â© 2026 Blank RL â€” All rights reserved." FontSize="11.5"
-                                                   Foreground="{StaticResource AccentHoverBrush}" Margin="0,2,0,0" />
-                                    </StackPanel>
+                        <!-- ══════════ LEFT STICK ══════════ -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="2">
+                                <StackPanel>
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Left Stick Processing" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                            <ctrl:StickVisualizer x:Name="LeftStickDetailVisualizer" Width="200" Height="200"
+                                                                  HorizontalAlignment="Center" Margin="0,0,0,16" />
+
+                                            <TextBlock Text="Deadzone" Style="{StaticResource LabelStyle}" Margin="0,8,0,4" />
+                                            <CheckBox Content="Enable Deadzone"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding LeftStick.DeadzoneEnabled}" Margin="0,0,0,8" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="80" />
+                                                </Grid.ColumnDefinitions>
+                                                <Slider Grid.Column="0"
+                                                        Style="{StaticResource ModernSlider}"
+                                                        Minimum="0" Maximum="0.5" SmallChange="0.001" LargeChange="0.01"
+                                                        Value="{Binding LeftStick.Deadzone}" VerticalAlignment="Center" />
+                                                <TextBox Grid.Column="1"
+                                                         Style="{StaticResource NumericTextBox}"
+                                                         Text="{Binding LeftStick.Deadzone, Converter={StaticResource FloatStr}, ConverterParameter=F3}"
+                                                         TextAlignment="Center" Margin="8,0,0,0" />
+                                            </Grid>
+
+                                            <TextBlock Text="Response Curve" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                            <ComboBox Style="{StaticResource ModernComboBox}"
+                                                      SelectedValue="{Binding LeftStick.ResponseCurve}"
+                                                      SelectedValuePath="Content">
+                                                <ComboBoxItem Content="Linear" IsSelected="True" />
+                                                <ComboBoxItem Content="Soft" />
+                                                <ComboBoxItem Content="Aggressive" />
+                                                <ComboBoxItem Content="Custom" />
+                                            </ComboBox>
+
+                                            <TextBlock Text="Speed Multiplier" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                    <TextBlock Text="X Speed" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="60" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0"
+                                                                Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
+                                                                Value="{Binding LeftStick.XSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1"
+                                                                 Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding LeftStick.XSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                                    <TextBlock Text="Y Speed" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="60" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0"
+                                                                Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
+                                                                Value="{Binding LeftStick.YSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1"
+                                                                 Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding LeftStick.YSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <TextBlock Text="Directional Speed" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                            <CheckBox Content="Enable Directional Speed"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding LeftStick.DirectionalSpeedEnabled}" Margin="0,0,0,8" />
+
+                                            <Grid IsEnabled="{Binding LeftStick.DirectionalSpeedEnabled}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition />
+                                                    <RowDefinition />
+                                                </Grid.RowDefinitions>
+
+                                                <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
+                                                    <TextBlock Text="Forward" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="50" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01"
+                                                                Value="{Binding LeftStick.ForwardSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding LeftStick.ForwardSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
+                                                    <TextBlock Text="Backward" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="50" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01"
+                                                                Value="{Binding LeftStick.BackwardSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding LeftStick.BackwardSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,0">
+                                                    <TextBlock Text="Left" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="50" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01"
+                                                                Value="{Binding LeftStick.LeftSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding LeftStick.LeftSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,0">
+                                                    <TextBlock Text="Right" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="50" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01"
+                                                                Value="{Binding LeftStick.RightSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1" Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding LeftStick.RightSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <TextBlock Text="Smoothing" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                            <CheckBox Content="Enable Smoothing (adds latency)"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding LeftStick.SmoothingEnabled}" Margin="0,0,0,8" />
+                                            <Grid IsEnabled="{Binding LeftStick.SmoothingEnabled}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="60" />
+                                                </Grid.ColumnDefinitions>
+                                                <Slider Grid.Column="0"
+                                                        Style="{StaticResource ModernSlider}"
+                                                        Minimum="0" Maximum="0.95" SmallChange="0.01" LargeChange="0.1"
+                                                        Value="{Binding LeftStick.SmoothingAmount}" VerticalAlignment="Center" />
+                                                <TextBox Grid.Column="1"
+                                                         Style="{StaticResource NumericTextBox}"
+                                                         Text="{Binding LeftStick.SmoothingAmount, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                         TextAlignment="Center" Margin="8,0,0,0" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
-                                <TextBlock Text="PS5 DualSense to Virtual Xbox 360 / DualShock 4 Controller" FontSize="12"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
-                                <TextBlock Text="ViGEmBus driver required for virtual controller. Unauthorized copying or distribution is prohibited."
-                                           FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
-            </TabItem>
-        </TabControl>
-        </Border>
+                            </ScrollViewer>
+                        </TabItem>
 
-        <!-- Bottom Status Bar -->
-        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}"
-                CornerRadius="11" Padding="14,8" Margin="0,6,0,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel VerticalAlignment="Center">
-                    <Border x:Name="UpdateBanner" Background="{StaticResource AccentSoftBrush}"
-                            CornerRadius="6" Padding="8,3" Margin="0,0,0,4"
-                            Visibility="Collapsed" Cursor="Hand"
-                            ToolTip="Opens the download page"
-                            MouseLeftButtonUp="OnUpdateBannerClick">
-                        <TextBlock x:Name="UpdateBannerText" FontSize="11.5" FontWeight="SemiBold"
-                                   Foreground="{StaticResource AccentHoverBrush}" />
-                    </Border>
-                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
-                    <TextBlock Text="Â© 2026 Blank RL â€” All rights reserved." Foreground="#525D70"
-                               FontSize="10.5" Margin="0,2,0,0" />
-                </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Processing: OFF" x:Name="ToggleProcessingBtn"
-                            Style="{StaticResource PrimaryButton}" FontSize="11.5" Padding="14,7"
-                            Click="OnToggleProcessingClick" />
-                    <Button Content="Safe Mode" x:Name="SafeModeBtn"
-                            Style="{StaticResource DangerButton}" FontSize="11.5" Padding="14,7"
-                            Click="OnSafeModeClick" Margin="8,0,0,0" />
-                </StackPanel>
+                        <!-- ══════════ RIGHT STICK ══════════ -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="2">
+                                <StackPanel>
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Right Stick Processing" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                            <ctrl:StickVisualizer x:Name="RightStickDetailVisualizer" Width="200" Height="200"
+                                                                  HorizontalAlignment="Center" Margin="0,0,0,16" />
+
+                                            <CheckBox Content="Enable Right Stick Processing"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding RightStick.ProcessingEnabled}" Margin="0,0,0,8" />
+                                            <TextBlock Text="Rocket League default: OFF — camera input passes through untouched."
+                                                       Foreground="{StaticResource CyanBrush}"
+                                                       TextWrapping="Wrap" FontSize="11.5" Margin="0,0,0,10" />
+
+                                            <TextBlock Text="Deadzone" Style="{StaticResource LabelStyle}" Margin="0,8,0,4" />
+                                            <CheckBox Content="Enable Deadzone"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding RightStick.Processing.DeadzoneEnabled}" Margin="0,0,0,8" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="80" />
+                                                </Grid.ColumnDefinitions>
+                                                <Slider Grid.Column="0"
+                                                        Style="{StaticResource ModernSlider}"
+                                                        Minimum="0" Maximum="0.5" SmallChange="0.001" LargeChange="0.01"
+                                                        Value="{Binding RightStick.Processing.Deadzone}" VerticalAlignment="Center" />
+                                                <TextBox Grid.Column="1"
+                                                         Style="{StaticResource NumericTextBox}"
+                                                         Text="{Binding RightStick.Processing.Deadzone, Converter={StaticResource FloatStr}, ConverterParameter=F3}"
+                                                         TextAlignment="Center" Margin="8,0,0,0" />
+                                            </Grid>
+
+                                            <TextBlock Text="Response Curve" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                            <ComboBox Style="{StaticResource ModernComboBox}"
+                                                      SelectedValue="{Binding RightStick.Processing.ResponseCurve}"
+                                                      SelectedValuePath="Content">
+                                                <ComboBoxItem Content="Linear" />
+                                                <ComboBoxItem Content="Soft" />
+                                                <ComboBoxItem Content="Aggressive" />
+                                                <ComboBoxItem Content="Custom" />
+                                            </ComboBox>
+
+                                            <TextBlock Text="Speed Multiplier" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                    <TextBlock Text="X Speed" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="60" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0"
+                                                                Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
+                                                                Value="{Binding RightStick.Processing.XSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1"
+                                                                 Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding RightStick.Processing.XSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                                    <TextBlock Text="Y Speed" Style="{StaticResource LabelStyle}" />
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="60" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0"
+                                                                Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.1" Maximum="3.0" SmallChange="0.01" LargeChange="0.1"
+                                                                Value="{Binding RightStick.Processing.YSpeed}" VerticalAlignment="Center" />
+                                                        <TextBox Grid.Column="1"
+                                                                 Style="{StaticResource NumericTextBox}"
+                                                                 Text="{Binding RightStick.Processing.YSpeed, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                                 TextAlignment="Center" Margin="4,0,0,0" />
+                                                    </Grid>
+                                                </StackPanel>
+                                            </Grid>
+
+                                            <TextBlock Text="Smoothing" Style="{StaticResource LabelStyle}" Margin="0,12,0,4" />
+                                            <CheckBox Content="Enable Smoothing (adds latency)"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding RightStick.Processing.SmoothingEnabled}" Margin="0,0,0,8" />
+                                            <Grid IsEnabled="{Binding RightStick.Processing.SmoothingEnabled}">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="60" />
+                                                </Grid.ColumnDefinitions>
+                                                <Slider Grid.Column="0"
+                                                        Style="{StaticResource ModernSlider}"
+                                                        Minimum="0" Maximum="0.95" SmallChange="0.01" LargeChange="0.1"
+                                                        Value="{Binding RightStick.Processing.SmoothingAmount}" VerticalAlignment="Center" />
+                                                <TextBox Grid.Column="1"
+                                                         Style="{StaticResource NumericTextBox}"
+                                                         Text="{Binding RightStick.Processing.SmoothingAmount, Converter={StaticResource FloatStr}, ConverterParameter=F2}"
+                                                         TextAlignment="Center" Margin="8,0,0,0" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ══════════ TURBO ══════════ -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="2">
+                                <StackPanel>
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Turbo — Rapid-Fire Buttons" Style="{StaticResource SubHeaderText}" Margin="0,0,0,6" />
+                                            <TextBlock Text="Real functionality, not a visual effect. While a turbo button is held, the virtual controller re-presses it at the rate below — exactly like classic rapid-fire controllers. Works only while Processing is ON (F8)."
+                                                       TextWrapping="Wrap" FontSize="12" Margin="0,0,0,14"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+
+                                            <Border Style="{StaticResource InnerPanel}" Margin="0,0,0,16">
+                                                <StackPanel>
+                                                    <CheckBox Content="Enable Turbo (master switch)"
+                                                              Style="{StaticResource ModernCheckBox}"
+                                                              IsChecked="{Binding Turbo.TurboEnabled}" Margin="0,0,0,12" />
+                                                    <TextBlock Text="Gap between presses (ms)" Style="{StaticResource LabelStyle}" />
+                                                    <Grid Margin="0,4,0,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="110" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Slider Grid.Column="0" Style="{StaticResource ModernSlider}"
+                                                                Minimum="0.01" Maximum="200" TickFrequency="1"
+                                                                IsSnapToTickEnabled="False"
+                                                                Value="{Binding Turbo.TurboIntervalMs}" VerticalAlignment="Center" />
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                                    HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                            <TextBox Style="{StaticResource NumericTextBox}" Width="58"
+                                                                     Text="{Binding Turbo.TurboIntervalMs, Converter={StaticResource FloatStr}, ConverterParameter=F3, UpdateSourceTrigger=PropertyChanged}"
+                                                                     TextAlignment="Center" />
+                                                            <TextBlock Text="ms" Margin="6,0,0,0" VerticalAlignment="Center"
+                                                                       Style="{StaticResource LabelStyle}" />
+                                                        </StackPanel>
+                                                    </Grid>
+                                                    <TextBlock Text="{Binding Turbo.IntervalText}" FontSize="12.5" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource AccentHoverBrush}" Margin="0,8,0,0" />
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource CardBorder}" IsEnabled="{Binding Turbo.TurboEnabled}">
+                                        <StackPanel>
+                                            <TextBlock Text="Assign Turbo Buttons" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition />
+                                                    <RowDefinition />
+                                                </Grid.RowDefinitions>
+
+                                                <CheckBox Grid.Column="0" Grid.Row="0" Content="A  (Cross)" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboA}" />
+                                                <CheckBox Grid.Column="1" Grid.Row="0" Content="B  (Circle)" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboB}" />
+                                                <CheckBox Grid.Column="2" Grid.Row="0" Content="X  (Square)" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboX}" />
+
+                                                <CheckBox Grid.Column="0" Grid.Row="1" Content="Y  (Triangle)" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboY}" />
+                                                <CheckBox Grid.Column="1" Grid.Row="1" Content="LB  (L1)" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboLB}" />
+                                                <CheckBox Grid.Column="2" Grid.Row="1" Content="RB  (R1)" Margin="0,0,6,10"
+                                                          Style="{StaticResource ModernCheckBox}"
+                                                          IsChecked="{Binding Turbo.TurboRB}" />
+                                            </Grid>
+                                            <TextBlock Text="D-Pad, triggers and analogue sticks are never turbo'd — raw input always reaches the virtual pad for them."
+                                                       FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Rapid-fire notes" Style="{StaticResource SubHeaderText}" Margin="0,0,0,8" />
+                                            <TextBlock Text="· First press answers with ZERO delay — the instant you hold, the press is sent (0 ms).&#10;· The gap between flips can go as low as 0.01 ms; the engine floors it at ~1 ms because the virtual pad reports at 250 Hz max — any value below that is converted to the pad's real ceiling (≈500 presses/s).&#10;· A gap cannot be literally 0: a held button must drop between presses or the game sees one long hold.&#10;· In Rocket League, avoid turbo on Boost (usually X/Square) or Jump (usually A/Cross) unless you intend it — a rapid input there can feel like extra presses."
+                                                       FontSize="11.5" TextWrapping="Wrap" LineHeight="17"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ══════════ PROFILES ══════════ -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="2">
+                                <StackPanel>
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Profile Management" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+
+                                            <Grid Margin="0,0,0,12">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <ComboBox Grid.Column="0" Style="{StaticResource ModernComboBox}"
+                                                          ItemsSource="{Binding AvailableProfiles}"
+                                                          SelectedItem="{Binding SelectedProfileName}" />
+                                                <Button Grid.Column="1" Content="Save" Style="{StaticResource SuccessButton}"
+                                                        Command="{Binding}" Click="OnSaveProfileClick" Margin="8,0,0,0" />
+                                                <Button Grid.Column="2" Content="Refresh" Style="{StaticResource SecondaryButton}"
+                                                        Click="OnRefreshProfilesClick" Margin="8,0,0,0" />
+                                            </Grid>
+
+                                            <Grid Margin="0,0,0,8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Button Grid.Column="0" Content="Export Profile..." Style="{StaticResource SecondaryButton}"
+                                                        Click="OnExportProfileClick" Margin="0,0,4,0" />
+                                                <Button Grid.Column="1" Content="Import Profile..." Style="{StaticResource SecondaryButton}"
+                                                        Click="OnImportProfileClick" Margin="4,0,4,0" />
+                                                <Button Grid.Column="2" Content="Rocket League Preset" Style="{StaticResource RlButton}"
+                                                        Click="OnApplyRocketLeaguePresetClick" Margin="4,0,0,0" />
+                                            </Grid>
+
+                                            <TextBlock Text="Current Profile:" Style="{StaticResource LabelStyle}" Margin="0,8,0,4" />
+                                            <TextBlock Text="{Binding SelectedProfileName}" FontSize="16" FontWeight="SemiBold" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+
+                        <!-- ══════════ ADVANCED ══════════ -->
+                        <TabItem>
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="2">
+                                <StackPanel>
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Hotkeys" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="Toggle Processing" Style="{StaticResource LabelStyle}" />
+                                                    <TextBlock Text="F8 — Toggle processing ON/OFF" FontSize="13" />
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" Margin="20,0,0,0">
+                                                    <TextBlock Text="Safe Mode Reset" Style="{StaticResource LabelStyle}" />
+                                                    <TextBlock Text="F9 — Reset all settings to defaults" FontSize="13" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Virtual Controller" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                            <TextBlock Text="Controller type games will see. Xbox 360 works with almost all Windows games (XInput). DualShock 4 only with games supporting DS4/DirectInput natively or via Steam Input."
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap" FontSize="12" Margin="0,0,0,8" />
+                                            <ComboBox Style="{StaticResource ModernComboBox}" Width="240"
+                                                      HorizontalAlignment="Left"
+                                                      SelectedValue="{Binding VirtualType}"
+                                                      SelectedValuePath="Tag">
+                                                <ComboBoxItem Content="Xbox 360 (XInput)"
+                                                              Tag="{x:Static models:VirtualControllerType.Xbox360}" />
+                                                <ComboBoxItem Content="DualShock 4"
+                                                              Tag="{x:Static models:VirtualControllerType.DualShock4}" />
+                                            </ComboBox>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Performance (system)" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                            <CheckBox Content="High-performance power plan while running"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding EnableHighPerformancePowerPlan}" Margin="0,0,0,4" />
+                                            <TextBlock Text="Keeps CPU clocks boosted during a session. Needs administrator rights; your original plan is restored on exit."
+                                                       Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" FontSize="12" Margin="0,0,0,12" />
+                                            <CheckBox Content="Force 1 ms timer resolution"
+                                                      Style="{StaticResource ModernCheckBox}"
+                                                      IsChecked="{Binding EnableHighResolutionTimer}" Margin="0,0,0,4" />
+                                            <TextBlock Text="Reduces input-scheduling jitter (timeBeginPeriod). Restored on exit."
+                                                       Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" FontSize="12" />
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="Safety" Style="{StaticResource SubHeaderText}" Margin="0,0,0,12" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Reset Profile" Style="{StaticResource DangerButton}"
+                                                        Click="OnResetProfileClick" Margin="0,0,8,0" />
+                                                <Button Content="Restore Defaults" Style="{StaticResource DangerButton}"
+                                                        Click="OnRestoreDefaultsClick" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Style="{StaticResource CardBorder}">
+                                        <StackPanel>
+                                            <TextBlock Text="About" Style="{StaticResource SubHeaderText}" Margin="0,0,0,8" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <Image Source="Resources/BlankRL.ico" Width="34" Height="34"
+                                                       VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                                                <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="Advanced Controller Processor v1.6.5" FontWeight="SemiBold" FontSize="13.5" />
+                                                    <TextBlock Text="© 2026 Blank RL — All rights reserved." FontSize="11.5"
+                                                               Foreground="{StaticResource AccentHoverBrush}" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <TextBlock Text="PS5 DualSense to Virtual Xbox 360 / DualShock 4 Controller" FontSize="12"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                            <TextBlock Text="ViGEmBus driver required for virtual controller. Unauthorized copying or distribution is prohibited."
+                                                       FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
+                </Border>
+
+                <!-- ══ STATUS BAR ══ -->
+                <Border Grid.Row="2" Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource BorderGlowBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="14,8" Margin="0,10,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <Border x:Name="UpdateBanner" Background="{StaticResource AccentSoftBrush}"
+                                    CornerRadius="6" Padding="8,3" Margin="0,0,0,4"
+                                    Visibility="Collapsed" Cursor="Hand"
+                                    ToolTip="Opens the download page"
+                                    MouseLeftButtonUp="OnUpdateBannerClick">
+                                <TextBlock x:Name="UpdateBannerText" FontSize="11.5" FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentHoverBrush}" />
+                            </Border>
+                            <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" />
+                            <TextBlock Text="© 2026 Blank RL — All rights reserved." Foreground="#55617A"
+                                       FontSize="10.5" Margin="0,2,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="Processing: OFF" x:Name="ToggleProcessingBtn"
+                                    Style="{StaticResource PrimaryButton}" FontSize="11.5" Padding="14,7"
+                                    Click="OnToggleProcessingClick" />
+                            <Button Content="Safe Mode" x:Name="SafeModeBtn"
+                                    Style="{StaticResource DangerButton}" FontSize="11.5" Padding="14,7"
+                                    Click="OnSafeModeClick" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
-        </Border>
+        </Grid>
     </Grid>
 </Window>
-
-

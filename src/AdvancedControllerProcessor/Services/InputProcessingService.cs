@@ -10,7 +10,8 @@ namespace AdvancedControllerProcessor.Services;
 ///
 /// For Left Stick: full pipeline based on ProcessingSettings.
 /// For Right Stick: pass-through by default, optional full pipeline.
-/// Buttons/Triggers/DPad: always pass-through (no processing).
+/// Buttons/Triggers/DPad: pass-through, except turbo buttons (see
+/// <see cref="ApplyTurbo"/>), which are oscillated at the configured rate.
 ///
 /// Thread-safe: only Process() and ResetSmoothing() access mutable state,
 /// and they are expected to be called from a single input thread.
@@ -19,6 +20,17 @@ public sealed class InputProcessingService : IInputProcessingService
 {
     private readonly SmoothingProcessor _leftSmoothing = new();
     private readonly SmoothingProcessor _rightSmoothing = new();
+
+    // Turbo state. Index-aligned with _turboButtons. Accessed only from the
+    // single input thread that calls Process(), so no locking is needed.
+    private static readonly GamepadButton[] TurboButtons =
+    {
+        GamepadButton.A, GamepadButton.B, GamepadButton.X, GamepadButton.Y,
+        GamepadButton.LeftShoulder, GamepadButton.RightShoulder
+    };
+
+    private readonly bool[] _turboPhase = new bool[TurboButtons.Length];
+    private readonly long[] _turboLastTick = new long[TurboButtons.Length];
 
     // Per-stick curve cache. The hot path runs hundreds of times per second;
     // resolving a CustomCurve there would allocate a list-backed object every
@@ -70,7 +82,7 @@ public sealed class InputProcessingService : IInputProcessingService
             RightStick = rightStick,
             L2 = Sanitize01(rawInput.L2),
             R2 = Sanitize01(rawInput.R2),
-            Buttons = rawInput.Buttons,
+            Buttons = ApplyTurbo(rawInput.Buttons, CurrentProfile.Turbo),
             DPad = rawInput.DPad,
             Connection = rawInput.Connection,
             Timestamp = rawInput.Timestamp
@@ -86,13 +98,82 @@ public sealed class InputProcessingService : IInputProcessingService
         float.IsFinite(v) ? Math.Clamp(v, 0f, 1f) : 0f;
 
     /// <summary>
-    /// Reset smoothing state for both sticks.
+    /// Apply the turbo oscillator to the raw button bitset when turbo is
+    /// configured and the profile has it enabled. For each turbo-assigned
+    /// button still held down, the virtual output toggles between pressed and
+    /// released with a flip interval of <see cref="ButtonTurboSettings.TurboIntervalMs"/>
+    /// milliseconds (floor 1 ms = the virtual pad's real report ceiling).
+    ///
+    /// A button that was just pressed starts in the "pressed" phase so the
+    /// first press is immediate — no initial dead half-cycle.
+    ///
+    /// Allocation-free (fixed-size arrays + Environment.TickCount64).
+    /// </summary>
+    private GamepadButton ApplyTurbo(GamepadButton raw, ButtonTurboSettings? turbo)
+    {
+        if (turbo is null || !turbo.TurboEnabled)
+            return raw;
+
+        // Milliseconds between flips. 0.01 is accepted as input, but the
+        // oscillator can only flip as fast as the virtual pad reports
+        // (~1 ms at the 250 Hz XInput max) — floor it here.
+        long flipMs = Math.Max((long)Math.Clamp(turbo.TurboIntervalMs, 0.01, 500), 1L);
+        long now = Environment.TickCount64;
+        GamepadButton output = GamepadButton.None;
+
+        for (int i = 0; i < TurboButtons.Length; i++)
+        {
+            var flag = TurboButtons[i];
+
+            if ((raw & flag) != 0 && turbo.IsButtonTurbo(flag))
+            {
+                long last = _turboLastTick[i];
+                if (last == 0) // just pressed — bite immediately
+                {
+                    _turboLastTick[i] = now;
+                    _turboPhase[i] = true;
+                    output |= flag;
+                }
+                else if (now - last >= flipMs)
+                {
+                    if (now < last) // TickCount64 wrapped — resync, keep phase
+                        _turboLastTick[i] = now;
+                    else
+                    {
+                        _turboLastTick[i] = now;
+                        _turboPhase[i] = !_turboPhase[i];
+                    }
+                    if (_turboPhase[i])
+                        output |= flag;
+                }
+                else if (_turboPhase[i])
+                {
+                    output |= flag; // still inside the current "on" half-cycle
+                }
+            }
+            else
+            {
+                _turboLastTick[i] = 0; // released or not assigned — reset
+                _turboPhase[i] = false;
+                if ((raw & flag) != 0)
+                    output |= flag; // held but not turbo-assigned — pass through unchanged
+            }
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// Reset smoothing state for both sticks and the turbo oscillators.
     /// Call when switching profiles, entering safe mode, or toggling processing.
     /// </summary>
     public void ResetSmoothing()
     {
         _leftSmoothing.Reset();
         _rightSmoothing.Reset();
+
+        Array.Clear(_turboPhase);
+        Array.Clear(_turboLastTick);
     }
 
     /// <summary>

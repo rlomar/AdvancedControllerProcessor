@@ -347,6 +347,35 @@ public partial class MainWindow : Window
 
     // ── Button Click Handlers ──────────────────────────────
 
+    /// <summary>
+    /// Sidebar navigation. RadioButtons carry their target tab index in Tag
+    /// (0..5); selection swaps the hidden tab strip's SelectedIndex.
+    /// </summary>
+    private void OnNavChecked(object sender, RoutedEventArgs e)
+    {
+        if (ScrollingTabHost is null)
+            return;
+
+        if (sender is System.Windows.Controls.RadioButton
+            {
+                IsChecked: true,
+                Tag: string tag
+            } && int.TryParse(tag, out int index) && index >= 0 && index < ScrollingTabHost.Items.Count)
+        {
+            ScrollingTabHost.SelectedIndex = index;
+        }
+    }
+
+    private void OnOpenTurboClick(object sender, RoutedEventArgs e)
+    {
+        ScrollingTabHost.SelectedIndex = 3;
+    }
+
+    private void OnApplyRocketLeaguePresetClick(object sender, RoutedEventArgs e)
+    {
+        _vm?.ApplyRocketLeaguePreset();
+    }
+
     private void OnToggleProcessingClick(object sender, RoutedEventArgs e)
     {
         _vm?.ToggleProcessing();

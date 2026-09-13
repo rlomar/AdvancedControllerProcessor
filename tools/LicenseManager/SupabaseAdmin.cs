@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 
@@ -28,7 +29,8 @@ public sealed class SupabaseAdmin
         _url = url.TrimEnd('/');
         _secret = secret;
         _http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd("ACP-LicenseManager/1.5");
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "ACP-LicenseManager/" + (Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0"));
     }
 
     // ── Config persistence ────────────────────────────────

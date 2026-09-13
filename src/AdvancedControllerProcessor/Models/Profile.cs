@@ -21,6 +21,12 @@ public sealed class Profile
     /// <summary>Right stick settings. Default: pass-through.</summary>
     public RightStickSettings RightStick { get; set; } = RightStickSettings.Default();
 
+    /// <summary>
+    /// Per-button turbo (rapid-fire) configuration applied when processing is
+    /// enabled. Null-safe: the pipeline treats a missing value as disabled.
+    /// </summary>
+    public ButtonTurboSettings Turbo { get; set; } = ButtonTurboSettings.Default();
+
     /// <summary>Whether trigger values are processed (future feature).</summary>
     public bool TriggerProcessingEnabled { get; set; }
 
@@ -42,6 +48,7 @@ public sealed class Profile
         Description = "Default profile with no processing applied",
         LeftStick = ProcessingSettings.PassThrough(),
         RightStick = RightStickSettings.Default(),
+        Turbo = ButtonTurboSettings.Default(),
         TriggerProcessingEnabled = false
     };
 

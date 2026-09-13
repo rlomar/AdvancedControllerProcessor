@@ -1,4 +1,5 @@
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
 
 namespace AdvancedControllerProcessor.Services;
@@ -83,7 +84,8 @@ public sealed class SupabaseClient
     private static HttpClient CreateClient()
     {
         var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("AdvancedControllerProcessor/1.6.5");
+        string version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
+        client.DefaultRequestHeaders.UserAgent.ParseAdd($"AdvancedControllerProcessor/{version}");
         client.DefaultRequestHeaders.Accept.ParseAdd("application/json");
         return client;
     }

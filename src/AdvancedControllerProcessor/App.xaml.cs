@@ -243,6 +243,7 @@ public partial class App : Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         Logging.Error(e.Exception, "Dispatcher unhandled exception");
+        Logging.Error(e.Exception, "Detail: " + (e.Exception.GetBaseException().ToString()));
         e.Handled = true;
     }
 
